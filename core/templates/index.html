@@ -69,10 +69,17 @@
         .misto-row input { flex: 1; } 
         .misto-row select { flex: 1; }
 
+        /* Caixa de Produtividade (NOVO) */
+        .produtividade-box { margin-top: 25px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; }
+        .prod-title { font-weight: bold; color: #555; margin-bottom: 15px; font-size: 1.1rem; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .prod-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 1rem; }
+        .prod-total { display: flex; justify-content: space-between; padding: 15px 0 0; font-weight: bold; font-size: 1.2rem; color: #2c3e50; border-top: 2px solid #ddd; margin-top: 10px; }
+
         /* Responsividade para celular */
         @media (max-width: 900px) {
             .tab-content.active { grid-template-columns: 1fr; }
             .kpi-container { grid-template-columns: 1fr 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -260,6 +267,27 @@
                         {% endfor %}
                     </tbody>
                 </table>
+
+                <div class="produtividade-box">
+                    <div class="prod-title">📊 Produtividade do Dia</div>
+                    <div class="prod-item">
+                        <span>Lucas Borges</span>
+                        <span>{{ stats_barbeiros.LUCAS }} atendimentos</span>
+                    </div>
+                    <div class="prod-item">
+                        <span>Aluízio</span>
+                        <span>{{ stats_barbeiros.ALUIZIO }} atendimentos</span>
+                    </div>
+                    <div class="prod-item">
+                        <span>Erik</span>
+                        <span>{{ stats_barbeiros.ERIK }} atendimentos</span>
+                    </div>
+                    <div class="prod-total">
+                        <span>TOTAL GERAL</span>
+                        <span>{{ total_atendimentos }}</span>
+                    </div>
+                </div>
+
             </div>
         </div>
 

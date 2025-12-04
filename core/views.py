@@ -10,7 +10,7 @@ def home(request):
     if request.method == "POST":
         tipo_form = request.POST.get('tipo_formulario')
 
-        # >>> FORMULÁRIO DE AGENDAMENTO
+        # AGENDAMENTO
         if tipo_form == 'agendamento':
             data = request.POST.get('data')
             horario = request.POST.get('horario')
@@ -21,36 +21,29 @@ def home(request):
             com_barba = request.POST.get('com_barba') == 'on'
             
             # Lógica Mista
-            v1 = 0; tipo1 = None
-            v2 = 0; tipo2 = None
-            valor_total = 0
+            v1 = 0; tipo1 = None; v2 = 0; tipo2 = None; valor_total = 0
 
             if pagamento == 'MISTO':
-                # Pega valores convertendo vírgula para ponto se necessário
                 try:
                     v1 = float(request.POST.get('valor_1', '0').replace(',', '.'))
                     tipo1 = request.POST.get('tipo_pagamento_1')
                     v2 = float(request.POST.get('valor_2', '0').replace(',', '.'))
                     tipo2 = request.POST.get('tipo_pagamento_2')
                     valor_total = v1 + v2
-                except ValueError:
-                    valor_total = 0
+                except ValueError: valor_total = 0
             else:
-                try:
-                    valor_total = float(request.POST.get('valor', '0').replace(',', '.'))
-                except ValueError:
-                    valor_total = 0
+                try: valor_total = float(request.POST.get('valor', '0').replace(',', '.'))
+                except ValueError: valor_total = 0
 
             Agendamento.objects.create(
                 data=data, horario=horario, cliente=cliente, servico=servico,
                 barbeiro=barbeiro, forma_pagamento=pagamento,
                 valor_total=valor_total, com_barba=com_barba,
-                valor_1=v1, tipo_pagamento_1=tipo1,
-                valor_2=v2, tipo_pagamento_2=tipo2
+                valor_1=v1, tipo_pagamento_1=tipo1, valor_2=v2, tipo_pagamento_2=tipo2
             )
             messages.success(request, f"Agendamento de {cliente} salvo!")
 
-        # >>> FORMULÁRIO DE VENDA
+        # VENDA
         elif tipo_form == 'venda':
             try:
                 Venda.objects.create(
@@ -60,10 +53,9 @@ def home(request):
                     vendedor=request.POST.get('vendedor')
                 )
                 messages.success(request, "Venda registrada!")
-            except ValueError:
-                messages.error(request, "Erro no valor da venda.")
+            except ValueError: messages.error(request, "Erro no valor.")
 
-        # >>> FORMULÁRIO DE SAÍDA
+        # SAÍDA
         elif tipo_form == 'saida':
             try:
                 Saida.objects.create(
@@ -72,8 +64,7 @@ def home(request):
                     valor=float(request.POST.get('valor', '0').replace(',', '.'))
                 )
                 messages.warning(request, "Saída registrada.")
-            except ValueError:
-                messages.error(request, "Erro no valor da saída.")
+            except ValueError: messages.error(request, "Erro no valor.")
 
         return redirect('home')
 
@@ -84,13 +75,13 @@ def home(request):
     saidas = Saida.objects.filter(data=data_filtro).order_by('-id')
     vendas = Venda.objects.filter(data=data_filtro).order_by('-id')
 
-    # KPIs
+    # KPIs Financeiros
     total_agend = agendamentos.aggregate(Sum('valor_total'))['valor_total__sum'] or 0
     total_vend = vendas.aggregate(Sum('valor'))['valor__sum'] or 0
     total_said = saidas.aggregate(Sum('valor'))['valor__sum'] or 0
     lucro = (total_agend + total_vend) - total_said
 
-    # Gráfico de Pagamentos (Corrigido para Misto)
+    # Gráfico Pagamentos
     totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     for a in agendamentos:
         if a.forma_pagamento == 'MISTO':
@@ -99,12 +90,23 @@ def home(request):
         elif a.forma_pagamento in totais_pgt:
             totais_pgt[a.forma_pagamento] += float(a.valor_total)
 
-    # Gráficos de Serviços e Barbeiros
-    stats_barbeiros = {}
+    # --- ESTATÍSTICAS DE BARBEIROS (PRODUTIVIDADE) ---
+    # Inicializamos com 0 para garantir que todos apareçam
+    stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
+    total_atendimentos_dia = 0 # Variável para a soma total
+    
     stats_servicos = {}
+
     for a in agendamentos:
+        # Regra: Com Barba ou Combo = 2 pontos, Resto = 1 ponto
         pts = 2 if a.com_barba or a.servico == 'COMPLETO' else 1
-        stats_barbeiros[a.barbeiro] = stats_barbeiros.get(a.barbeiro, 0) + pts
+        
+        if a.barbeiro in stats_barbeiros:
+            stats_barbeiros[a.barbeiro] += pts
+        
+        total_atendimentos_dia += pts # Soma no geral
+
+        # Stats Serviços
         stats_servicos[a.get_servico_display()] = stats_servicos.get(a.get_servico_display(), 0) + 1
 
     context = {
@@ -112,7 +114,10 @@ def home(request):
         'data_filtro': data_filtro,
         'kpi_agend': total_agend, 'kpi_vend': total_vend, 'kpi_said': total_said, 'kpi_lucro': lucro,
         
-        # Dados JSON para o JavaScript
+        # Passamos os dados de produtividade para o template
+        'stats_barbeiros': stats_barbeiros,
+        'total_atendimentos': total_atendimentos_dia,
+
         'chart_pgt_labels': json.dumps(['Dinheiro', 'Pix', 'Cartão']),
         'chart_pgt_data': json.dumps([totais_pgt['DINHEIRO'], totais_pgt['PIX'], totais_pgt['CARTAO']]),
         'chart_barb_labels': json.dumps(list(stats_barbeiros.keys())),
@@ -123,10 +128,7 @@ def home(request):
     }
     return render(request, 'index.html', context)
 
-# Funções de Deletar
-def deletar_agendamento(request, id):
-    get_object_or_404(Agendamento, id=id).delete(); return redirect('home')
-def deletar_venda(request, id):
-    get_object_or_404(Venda, id=id).delete(); return redirect('home')
-def deletar_saida(request, id):
-    get_object_or_404(Saida, id=id).delete(); return redirect('home')
+# Deletes (iguais)
+def deletar_agendamento(request, id): get_object_or_404(Agendamento, id=id).delete(); return redirect('home')
+def deletar_venda(request, id): get_object_or_404(Venda, id=id).delete(); return redirect('home')
+def deletar_saida(request, id): get_object_or_404(Saida, id=id).delete(); return redirect('home')
