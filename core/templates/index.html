@@ -659,14 +659,21 @@
                         {% for v in vendas %}
                         <tr>
                             <td data-label="Produto">{{ v.item }}</td>
-                            <td data-label="Vendedor">{{ v.get_vendedor_display }}</td>
+                            
+                            <td data-label="Vendedor">{{ v.vendedor }}</td>
+                            
                             <td data-label="Valor">R$ {{ v.valor|floatformat:2 }}</td>
+                            
                             <td data-label="Excluir" style="text-align: right;">
                                 <a href="{% url 'deletar_item' 'venda' v.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza?');">🗑️</a>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4" style="text-align:center; padding:30px; color:#999;">Nenhuma venda hoje.</td></tr>
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding:30px; color:#999;">
+                                Nenhuma venda hoje.
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
