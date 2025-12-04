@@ -394,6 +394,58 @@
             .charts-row { grid-template-columns: repeat(3, 1fr); }
         }
 
+        /* =========================================
+           10. ESTILOS DO EXPANDER (TIPO STREAMLIT)
+           ========================================= */
+        .expander-btn {
+            width: 100%;
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #2c3e50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-top: 40px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+        
+        .expander-btn:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .expander-content {
+            display: none; /* Começa escondido */
+            overflow: hidden;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .expander-content.open {
+            display: block; /* Aparece quando ativo */
+        }
+        
+        .arrow-icon {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        .expander-btn.active .arrow-icon {
+            transform: rotate(180deg);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
     </style>
 </head>
 <body>
@@ -535,67 +587,69 @@
             </div>
 
             <div>
-                <h3 style="margin-top: 40px; margin-bottom: 20px;">📋 Lista de Cortes</h3>
-                
-            <table>
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Cliente</th>
-                            <th>Barbeiro</th> 
-                            <th>Serviço</th>
-                            <th>Pagamento</th> 
-                            <th>Valor</th>
-                            <th style="text-align: right;">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in agendamentos %}
-                        <tr>
-                            <td data-label="Hora">{{ a.horario }}</td>
+                <button class="expander-btn" type="button" onclick="toggleExpander()">
+                    <span>📋 Lista de Cortes (Clique para ver)</span>
+                    <span class="arrow-icon">▼</span>
+                </button>
 
-                            <td data-label="Cliente"><strong>{{ a.cliente }}</strong></td>
+                <div id="conteudo-lista" class="expander-content">
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Cliente</th>
+                                <th>Barbeiro</th> 
+                                <th>Serviço</th>
+                                <th>Pagamento</th> 
+                                <th>Valor</th>
+                                <th style="text-align: right;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in agendamentos %}
+                            <tr>
+                                <td data-label="Hora">{{ a.horario }}</td>
 
-                            <td data-label="Barbeiro">
-                                {{ a.barbeiro }}
-                            </td>
+                                <td data-label="Cliente"><strong>{{ a.cliente }}</strong></td>
 
-                            <td data-label="Serviço">
-                                {{ a.servico }}
-                                {% if a.com_barba %} 
-                                    <span style="color:#27ae60; font-weight:bold; font-size:0.85rem; margin-left:5px;">+Barba</span> 
-                                {% endif %}
-                            </td>
+                                <td data-label="Barbeiro">
+                                    {{ a.barbeiro }}
+                                </td>
 
-                            <td data-label="Pagamento">
-                                {% if a.forma_pagamento == 'MISTO' %}
-                                    <span style="font-size:0.9rem; color:#d35400; font-weight:bold;">
-                                        Misto ({{ a.tipo_pagamento_1|slice:":3" }}/{{ a.tipo_pagamento_2|slice:":3" }})
-                                    </span>
-                                {% else %}
-                                    {{ a.forma_pagamento }}
-                                {% endif %}
-                            </td>
+                                <td data-label="Serviço">
+                                    {{ a.servico }}
+                                    </td>
 
-                            <td data-label="Valor">
-                                R$ {{ a.valor_total|floatformat:2 }}
-                            </td>
+                                <td data-label="Pagamento">
+                                    {% if a.forma_pagamento == 'MISTO' %}
+                                        <span style="font-size:0.9rem; color:#d35400; font-weight:bold;">
+                                            Misto ({{ a.tipo_pagamento_1|slice:":3" }}/{{ a.tipo_pagamento_2|slice:":3" }})
+                                        </span>
+                                    {% else %}
+                                        {{ a.forma_pagamento }}
+                                    {% endif %}
+                                </td>
 
-                            <td data-label="Excluir" style="text-align: right;">
-                                <a href="{% url 'deletar_item' 'agendamento' a.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza que deseja excluir?');">🗑️</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" style="text-align:center; padding:30px; color:#999;">
-                                Nenhum atendimento registrado hoje.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                
-                <div class="produtividade-box">
+                                <td data-label="Valor">
+                                    R$ {{ a.valor_total|floatformat:2 }}
+                                </td>
+
+                                <td data-label="Excluir" style="text-align: right;">
+                                    <a href="{% url 'deletar_item' 'agendamento' a.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza que deseja excluir?');">🗑️</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" style="text-align:center; padding:30px; color:#999;">
+                                    Nenhum atendimento registrado hoje.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                </div> <div class="produtividade-box">
                     <div class="prod-title">📊 Produtividade do Dia</div>
                     <div class="prod-item">
                         <span>Lucas Borges</span>
@@ -616,7 +670,6 @@
                 </div>
 
             </div>
-        </div>
 
         <div id="tab-venda" class="tab-content">
             <div>
@@ -832,6 +885,17 @@
                 maintainAspectRatio: false 
             }
         });
+        
+        function toggleExpander() {
+            var content = document.getElementById("conteudo-lista");
+            var btn = document.querySelector(".expander-btn");
+            
+            // Abre/Fecha o conteúdo
+            content.classList.toggle("open");
+            
+            // Gira a setinha do botão
+            btn.classList.toggle("active");
+        }
     </script>
 
 </body>
