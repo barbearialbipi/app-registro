@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from datetime import datetime, date
+# --- ALTERAÇÃO 1: Adicionei 'timedelta' aqui nos imports ---
+from datetime import datetime, date, timedelta
 import json
 import os
 import gspread
@@ -55,20 +56,16 @@ def home(request):
                 v2 = request.POST.get('valor_2', '0').replace(',', '.')
                 
                 # --- LÓGICA DO PAGAMENTO NA PLANILHA ---
-                # Pega o que veio do formulário ('MISTO', 'PIX', etc)
                 pgt_form = request.POST.get('pagamento') 
                 t1 = request.POST.get('tipo_pagamento_1', '').upper()
                 t2 = request.POST.get('tipo_pagamento_2', '').upper()
                 
-                # Variável que vai ser escrita na Coluna F
                 texto_final_coluna_F = pgt_form.upper()
 
                 if pgt_form == 'MISTO':
-                    # Se for misto, soma os valores e MUDA O TEXTO para "TIPO1/TIPO2"
                     total = float(v1) + float(v2)
                     texto_final_coluna_F = f"{t1}/{t2}" 
                 else:
-                    # Se não for misto, pega o valor cheio e mantém o texto normal (ex: PIX)
                     total = request.POST.get('valor', '0').replace(',', '.')
 
                 # --- LÓGICA DA BARBA ---
@@ -83,12 +80,12 @@ def home(request):
                     request.POST.get('data'),
                     request.POST.get('horario'),
                     request.POST.get('cliente'),
-                    servico_nome,                         # Ex: "Social com Barba"
+                    servico_nome,                         
                     request.POST.get('barbeiro').upper(), 
-                    texto_final_coluna_F,                 # Ex: "DINHEIRO/PIX" (Não escreve "MISTO")
+                    texto_final_coluna_F,                 
                     v1, v2, total,
                     "-",
-                    t1, t2 # Mantemos aqui para segurança do cálculo
+                    t1, t2 
                 ])
                 messages.success(request, "Agendamento salvo!")
 
@@ -140,7 +137,7 @@ def home(request):
                         val = float(val_str) if val_str else 0.0
                         
                         raw_barbeiro = str(row[4]).upper().strip()
-                        raw_pgt = str(row[5]).upper().strip() # Aqui virá "DINHEIRO/PIX"
+                        raw_pgt = str(row[5]).upper().strip()
                         raw_servico = str(row[3]).strip()
 
                         # Identifica Barbeiros
@@ -156,9 +153,9 @@ def home(request):
                             'cliente': row[2], 
                             'servico': raw_servico, 
                             'barbeiro': row[4], 
-                            'forma_pagamento': row[5], # Exibe o que está na planilha (DINHEIRO/PIX)
+                            'forma_pagamento': row[5], 
                             'valor_total': val,
-                            'tipo_pagamento_1': row[10], # Precisamos disso pro HTML antigo não quebrar
+                            'tipo_pagamento_1': row[10], 
                             'tipo_pagamento_2': row[11]
                         }
                         agendamentos.append(item)
@@ -180,13 +177,10 @@ def home(request):
                             stats_servicos['BARBA'] = stats_servicos.get('BARBA', 0) + 1
                         
                         # --- PAGAMENTOS (GRÁFICO) ---
-                        # Se encontrar uma barra, entende que é misto (ex: DINHEIRO/PIX)
                         if '/' in raw_pgt or 'MISTO' in raw_pgt:
                             try:
                                 v1 = float(str(row[6]).replace(',', '.') or 0)
                                 v2 = float(str(row[7]).replace(',', '.') or 0)
-                                
-                                # Tenta pegar os tipos das colunas K/L, se não, faz split do texto
                                 t1 = str(row[10]).upper().strip()
                                 t2 = str(row[11]).upper().strip()
                                 
@@ -208,7 +202,7 @@ def home(request):
             
             agendamentos.sort(key=lambda x: x['horario'], reverse=True)
 
-            # (Vendas e Saídas inalteradas...)
+            # --- VENDAS ---
             rows_vend = planilha.worksheet("Vendas").get_all_values()
             for i, row in enumerate(rows_vend):
                 if i == 0: continue
@@ -219,6 +213,7 @@ def home(request):
                         kpi_vend += val
                     except: pass
 
+            # --- SAIDAS ---
             rows_said = planilha.worksheet("Saidas").get_all_values()
             for i, row in enumerate(rows_said):
                 if i == 0: continue
@@ -233,6 +228,9 @@ def home(request):
 
     kpi_lucro = (kpi_agend + kpi_vend) - kpi_said
 
+    # --- ALTERAÇÃO 2: Cálculo correto do Horário de Brasília (UTC-3) ---
+    hora_brasilia = (datetime.utcnow() - timedelta(hours=3)).strftime("%H:%M")
+
     context = {
         'data_filtro': data_filtro,
         'agendamentos': agendamentos, 'vendas': vendas, 'saidas': saidas,
@@ -244,7 +242,8 @@ def home(request):
         'chart_barb_data': json.dumps(list(stats_barbeiros.values())),
         'chart_serv_labels': json.dumps(list(stats_servicos.keys())),
         'chart_serv_data': json.dumps(list(stats_servicos.values())),
-        'hora_agora': datetime.now().strftime("%H:%M")
+        # --- ALTERAÇÃO 3: Enviando a hora correta ---
+        'hora_agora': hora_brasilia 
     }
     return render(request, 'index.html', context)
 
