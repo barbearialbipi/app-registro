@@ -50,29 +50,45 @@ def home(request):
             if tipo_form == 'agendamento':
                 aba = planilha.worksheet("Agendamentos")
                 
+                # --- PREPARA VALORES ---
                 v1 = request.POST.get('valor_1', '0').replace(',', '.')
                 v2 = request.POST.get('valor_2', '0').replace(',', '.')
-                pgt_principal = request.POST.get('pagamento')
-                total = (float(v1) + float(v2)) if pgt_principal == 'MISTO' else request.POST.get('valor', '0').replace(',', '.')
                 
+                # --- LÓGICA DO PAGAMENTO NA PLANILHA ---
+                # Pega o que veio do formulário ('MISTO', 'PIX', etc)
+                pgt_form = request.POST.get('pagamento') 
+                t1 = request.POST.get('tipo_pagamento_1', '').upper()
+                t2 = request.POST.get('tipo_pagamento_2', '').upper()
+                
+                # Variável que vai ser escrita na Coluna F
+                texto_final_coluna_F = pgt_form.upper()
+
+                if pgt_form == 'MISTO':
+                    # Se for misto, soma os valores e MUDA O TEXTO para "TIPO1/TIPO2"
+                    total = float(v1) + float(v2)
+                    texto_final_coluna_F = f"{t1}/{t2}" 
+                else:
+                    # Se não for misto, pega o valor cheio e mantém o texto normal (ex: PIX)
+                    total = request.POST.get('valor', '0').replace(',', '.')
+
+                # --- LÓGICA DA BARBA ---
                 servico_nome = request.POST.get('servico')
                 tem_barba = request.POST.get('com_barba') == 'on'
                 
-                # Salva na planilha como "Social com Barba"
                 if tem_barba:
                     servico_nome = f"{servico_nome} com Barba"
 
+                # --- GRAVAÇÃO ---
                 aba.append_row([
                     request.POST.get('data'),
                     request.POST.get('horario'),
                     request.POST.get('cliente'),
-                    servico_nome,
+                    servico_nome,                         # Ex: "Social com Barba"
                     request.POST.get('barbeiro').upper(), 
-                    pgt_principal.upper(),                
+                    texto_final_coluna_F,                 # Ex: "DINHEIRO/PIX" (Não escreve "MISTO")
                     v1, v2, total,
                     "-",
-                    request.POST.get('tipo_pagamento_1', '-').upper(),
-                    request.POST.get('tipo_pagamento_2', '-').upper()
+                    t1, t2 # Mantemos aqui para segurança do cálculo
                 ])
                 messages.success(request, "Agendamento salvo!")
 
@@ -124,10 +140,10 @@ def home(request):
                         val = float(val_str) if val_str else 0.0
                         
                         raw_barbeiro = str(row[4]).upper().strip()
-                        raw_pgt = str(row[5]).upper().strip()
+                        raw_pgt = str(row[5]).upper().strip() # Aqui virá "DINHEIRO/PIX"
                         raw_servico = str(row[3]).strip()
 
-                        # Identificação Barbeiros
+                        # Identifica Barbeiros
                         chave_barbeiro = 'OUTROS'
                         if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
                         elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
@@ -140,42 +156,45 @@ def home(request):
                             'cliente': row[2], 
                             'servico': raw_servico, 
                             'barbeiro': row[4], 
-                            'forma_pagamento': row[5], 
+                            'forma_pagamento': row[5], # Exibe o que está na planilha (DINHEIRO/PIX)
                             'valor_total': val,
-                            'tipo_pagamento_1': row[10],
+                            'tipo_pagamento_1': row[10], # Precisamos disso pro HTML antigo não quebrar
                             'tipo_pagamento_2': row[11]
                         }
                         agendamentos.append(item)
                         kpi_agend += val
                         
-                        # --- CÁLCULO DE PONTOS (BARBEIRO) ---
+                        # --- CÁLCULO PONTOS BARBEIRO ---
                         servico_upper = raw_servico.upper()
                         e_combo = ('COM BARBA' in servico_upper) or ('+ BARBA' in servico_upper) or ('COMPLETO' in servico_upper)
                         
                         if chave_barbeiro in stats_barbeiros:
-                            # Se for combo, soma 2 atendimentos para o barbeiro
                             pts = 2 if e_combo else 1
                             stats_barbeiros[chave_barbeiro] += pts
                             total_atendimentos += pts
                         
-                        # --- GRÁFICO DE SERVIÇOS (LÓGICA NOVA) ---
-                        # 1. Pega o nome base (Ex: "SOCIAL COM BARBA" vira "SOCIAL")
+                        # --- GRÁFICO SERVIÇOS (SEPARADOS) ---
                         nome_serv_base = servico_upper.replace(' COM BARBA', '').replace('+ BARBA', '').strip()
-                        
-                        # 2. Soma 1 para o corte (Social)
                         stats_servicos[nome_serv_base] = stats_servicos.get(nome_serv_base, 0) + 1
-                        
-                        # 3. Se tiver barba junto, SOMA +1 para a categoria "BARBA" separadamente
                         if e_combo:
                             stats_servicos['BARBA'] = stats_servicos.get('BARBA', 0) + 1
                         
-                        # --- PAGAMENTOS ---
-                        if raw_pgt == 'MISTO':
+                        # --- PAGAMENTOS (GRÁFICO) ---
+                        # Se encontrar uma barra, entende que é misto (ex: DINHEIRO/PIX)
+                        if '/' in raw_pgt or 'MISTO' in raw_pgt:
                             try:
                                 v1 = float(str(row[6]).replace(',', '.') or 0)
-                                t1 = str(row[10]).upper().strip()
                                 v2 = float(str(row[7]).replace(',', '.') or 0)
+                                
+                                # Tenta pegar os tipos das colunas K/L, se não, faz split do texto
+                                t1 = str(row[10]).upper().strip()
                                 t2 = str(row[11]).upper().strip()
+                                
+                                if not t1 and '/' in raw_pgt:
+                                    partes = raw_pgt.split('/')
+                                    t1 = partes[0].strip()
+                                    t2 = partes[1].strip() if len(partes) > 1 else ''
+
                                 if t1 in totais_pgt: totais_pgt[t1] += v1
                                 if t2 in totais_pgt: totais_pgt[t2] += v2
                             except: pass
@@ -189,7 +208,7 @@ def home(request):
             
             agendamentos.sort(key=lambda x: x['horario'], reverse=True)
 
-            # (O restante do código de Vendas e Saídas permanece igual...)
+            # (Vendas e Saídas inalteradas...)
             rows_vend = planilha.worksheet("Vendas").get_all_values()
             for i, row in enumerate(rows_vend):
                 if i == 0: continue
