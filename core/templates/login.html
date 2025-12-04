@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Barbearia Lucas Borges</title>
+    <style>
+        /* Reset básico e centralização */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh; /* Ocupa a altura toda da tela */
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* O Cartão Branco */
+        .login-card {
+            background-color: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 320px; /* Tamanho ideal para celular */
+            text-align: center;
+        }
+
+        /* Estilo da Logo (Azul Institucional) */
+        .logo {
+            width: 100px;
+            height: 100px;
+            background-color: #2f3863; /* Azul Barbearia */
+            padding: 15px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            object-fit: contain;
+        }
+
+        /* Título */
+        h2 {
+            color: #2c3e50;
+            margin: 0 0 25px 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Mensagem de Erro */
+        .error-msg {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* Campo de Senha */
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px; /* Tamanho 16px evita zoom no iPhone */
+            box-sizing: border-box;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="password"]:focus {
+            border-color: #2f3863; /* Borda azul ao digitar */
+        }
+
+        /* Botão Entrar */
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #2f3863; /* Azul Barbearia */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #1a2240; /* Azul um pouco mais escuro */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <img src="https://i.imgur.com/zJTASJk.png" alt="Logo Barbearia" class="logo">
+        
+        <h2>Faça Login para continuar</h2>
+
+        {% if erro %}
+            <div class="error-msg">{{ erro }}</div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="password" name="senha" placeholder="Digite a senha" required autofocus>
+            <button type="submit">ENTRAR</button>
+        </form>
+    </div>
+
+</body>
+</html>
