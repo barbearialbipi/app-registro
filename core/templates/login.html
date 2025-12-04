@@ -2,19 +2,24 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Barbearia Lucas Borges</title>
     <style>
-        /* Reset básico e centralização */
+        /* Reset básico */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
-            height: 100vh; /* Ocupa a altura toda da tela */
+            min-height: 100vh; /* Garante altura mínima */
             margin: 0;
             display: flex;
-            align-items: center;
+            
+            /* AQUI ESTÁ A MUDANÇA: Alinha no topo e centraliza na horizontal */
+            align-items: flex-start; 
             justify-content: center;
-            padding: 20px;
+            
+            /* Espaço do topo para não ficar colado na barra do celular */
+            padding-top: 60px; 
+            box-sizing: border-box;
         }
 
         /* O Cartão Branco */
@@ -22,81 +27,95 @@
             background-color: white;
             padding: 40px 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 320px; /* Tamanho ideal para celular */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* Sombra mais suave */
+            width: 90%; /* Ocupa 90% da largura no celular */
+            max-width: 350px; /* Trava o tamanho máximo no PC */
             text-align: center;
         }
 
-        /* Estilo da Logo (Azul Institucional) */
+        /* Estilo da Logo */
         .logo {
             width: 100px;
             height: 100px;
-            background-color: #2f3863; /* Azul Barbearia */
+            background-color: #2f3863;
             padding: 15px;
             border-radius: 50%;
-            border: 4px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            margin-bottom: 20px;
+            border: 4px solid #f0f2f5; /* Borda cinza suave para destacar do fundo branco */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
             object-fit: contain;
         }
 
         /* Título */
         h2 {
-            color: #2c3e50;
-            margin: 0 0 25px 0;
-            font-size: 1.3rem;
-            font-weight: 700;
+            color: #2f3863;
+            margin: 0 0 30px 0;
+            font-size: 1.4rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         /* Mensagem de Erro */
         .error-msg {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            font-weight: 500;
         }
 
         /* Campo de Senha */
         input[type="password"] {
             width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            font-size: 16px; /* Tamanho 16px evita zoom no iPhone */
+            padding: 16px; /* Altura boa para toque */
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px; /* Evita zoom automático no iPhone */
             box-sizing: border-box;
             text-align: center;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background-color: #fafafa;
+            color: #333;
         }
 
         input[type="password"]:focus {
-            border-color: #2f3863; /* Borda azul ao digitar */
+            border-color: #3498db;
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
         }
 
         /* Botão Entrar */
         button {
             width: 100%;
-            padding: 15px;
-            background-color: #2f3863; /* Azul Barbearia */
+            padding: 16px;
+            background-color: #2f3863;
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 800;
             cursor: pointer;
-            transition: background-color 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background-color 0.3s;
+            box-shadow: 0 4px 10px rgba(47, 56, 99, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        button:hover {
-            background-color: #1a2240; /* Azul um pouco mais escuro */
+        button:active {
+            transform: scale(0.98);
+            background-color: #1a254a;
+        }
+        
+        /* Rodapézinho */
+        .footer {
+            margin-top: 30px;
+            color: #aaa;
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -105,17 +124,19 @@
     <div class="login-card">
         <img src="https://i.imgur.com/zJTASJk.png" alt="Logo Barbearia" class="logo">
         
-        <h2>Faça Login para continuar</h2>
+        <h2>Acesso Restrito</h2>
 
         {% if erro %}
-            <div class="error-msg">{{ erro }}</div>
+            <div class="error-msg">⚠️ {{ erro }}</div>
         {% endif %}
 
         <form method="POST">
             {% csrf_token %}
-            <input type="password" name="senha" placeholder="Digite a senha" required autofocus>
+            <input type="password" name="senha" placeholder="Senha de Acesso" required autofocus>
             <button type="submit">ENTRAR</button>
         </form>
+
+        <div class="footer">Sistema Barbearia Lucas Borges</div>
     </div>
 
 </body>
