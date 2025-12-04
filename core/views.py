@@ -6,107 +6,127 @@ from datetime import datetime, date
 import json
 
 def home(request):
-    # --- 1. SE FOR PARA SALVAR (POST) ---
+    # --- 1. RECEBER DADOS (POST) ---
     if request.method == "POST":
-        data = request.POST.get('data')
-        horario = request.POST.get('horario')
-        cliente = request.POST.get('cliente')
-        servico = request.POST.get('servico')
-        barbeiro = request.POST.get('barbeiro')
-        pagamento = request.POST.get('pagamento')
-        com_barba = request.POST.get('com_barba') == 'on'
-        
-        # Lógica do Pagamento Misto ou Normal
-        valor_total = 0
-        v1 = 0
-        v2 = 0
-        
-        if pagamento == 'MISTO':
-            v1 = float(request.POST.get('valor_1', 0))
-            v2 = float(request.POST.get('valor_2', 0))
-            valor_total = v1 + v2
-        else:
-            valor_total = request.POST.get('valor')
+        tipo_form = request.POST.get('tipo_formulario')
 
-        Agendamento.objects.create(
-            data=data, horario=horario, cliente=cliente, servico=servico,
-            barbeiro=barbeiro, forma_pagamento=pagamento,
-            valor_total=valor_total, valor_1=v1, valor_2=v2, com_barba=com_barba
-        )
-        messages.success(request, f"Agendamento de {cliente} salvo!")
+        # >>> FORMULÁRIO DE AGENDAMENTO
+        if tipo_form == 'agendamento':
+            data = request.POST.get('data')
+            horario = request.POST.get('horario')
+            cliente = request.POST.get('cliente')
+            servico = request.POST.get('servico')
+            barbeiro = request.POST.get('barbeiro')
+            pagamento = request.POST.get('pagamento')
+            com_barba = request.POST.get('com_barba') == 'on'
+            
+            # Lógica Mista
+            v1 = 0; tipo1 = None
+            v2 = 0; tipo2 = None
+            valor_total = 0
+
+            if pagamento == 'MISTO':
+                # Pega valores convertendo vírgula para ponto se necessário
+                try:
+                    v1 = float(request.POST.get('valor_1', '0').replace(',', '.'))
+                    tipo1 = request.POST.get('tipo_pagamento_1')
+                    v2 = float(request.POST.get('valor_2', '0').replace(',', '.'))
+                    tipo2 = request.POST.get('tipo_pagamento_2')
+                    valor_total = v1 + v2
+                except ValueError:
+                    valor_total = 0
+            else:
+                try:
+                    valor_total = float(request.POST.get('valor', '0').replace(',', '.'))
+                except ValueError:
+                    valor_total = 0
+
+            Agendamento.objects.create(
+                data=data, horario=horario, cliente=cliente, servico=servico,
+                barbeiro=barbeiro, forma_pagamento=pagamento,
+                valor_total=valor_total, com_barba=com_barba,
+                valor_1=v1, tipo_pagamento_1=tipo1,
+                valor_2=v2, tipo_pagamento_2=tipo2
+            )
+            messages.success(request, f"Agendamento de {cliente} salvo!")
+
+        # >>> FORMULÁRIO DE VENDA
+        elif tipo_form == 'venda':
+            try:
+                Venda.objects.create(
+                    data=request.POST.get('data'),
+                    item=request.POST.get('item'),
+                    valor=float(request.POST.get('valor', '0').replace(',', '.')),
+                    vendedor=request.POST.get('vendedor')
+                )
+                messages.success(request, "Venda registrada!")
+            except ValueError:
+                messages.error(request, "Erro no valor da venda.")
+
+        # >>> FORMULÁRIO DE SAÍDA
+        elif tipo_form == 'saida':
+            try:
+                Saida.objects.create(
+                    data=request.POST.get('data'),
+                    descricao=request.POST.get('descricao'),
+                    valor=float(request.POST.get('valor', '0').replace(',', '.'))
+                )
+                messages.warning(request, "Saída registrada.")
+            except ValueError:
+                messages.error(request, "Erro no valor da saída.")
+
         return redirect('home')
 
-    # --- 2. SE FOR PARA MOSTRAR A TELA (GET) ---
-    
-    # Define a data para filtrar (Padrão: Hoje)
+    # --- 2. EXIBIR DADOS (GET) ---
     data_filtro = request.GET.get('data_filtro', date.today().strftime('%Y-%m-%d'))
     
-    # Pega os dados do Banco filtrados por data
     agendamentos = Agendamento.objects.filter(data=data_filtro).order_by('-horario')
-    saidas = Saida.objects.filter(data=data_filtro)
-    vendas = Venda.objects.filter(data=data_filtro)
+    saidas = Saida.objects.filter(data=data_filtro).order_by('-id')
+    vendas = Venda.objects.filter(data=data_filtro).order_by('-id')
 
-    # --- CÁLCULOS FINANCEIROS (KPIs) ---
-    total_agendamentos = agendamentos.aggregate(Sum('valor_total'))['valor_total__sum'] or 0
-    total_vendas = vendas.aggregate(Sum('valor'))['valor__sum'] or 0
-    total_saidas = saidas.aggregate(Sum('valor'))['valor__sum'] or 0
-    lucro_liquido = (total_agendamentos + total_vendas) - total_saidas
+    # KPIs
+    total_agend = agendamentos.aggregate(Sum('valor_total'))['valor_total__sum'] or 0
+    total_vend = vendas.aggregate(Sum('valor'))['valor__sum'] or 0
+    total_said = saidas.aggregate(Sum('valor'))['valor__sum'] or 0
+    lucro = (total_agend + total_vend) - total_said
 
-    # --- DADOS PARA OS GRÁFICOS ---
-    
-    # 1. Pagamentos (Pix vs Dinheiro vs Cartão)
-    # Precisamos somar manualmente por causa do misto
-    pgt_pix = 0
-    pgt_dinheiro = 0
-    pgt_cartao = 0
-    
+    # Gráfico de Pagamentos (Corrigido para Misto)
+    totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     for a in agendamentos:
-        if a.forma_pagamento == 'PIX': pgt_pix += float(a.valor_total)
-        elif a.forma_pagamento == 'DINHEIRO': pgt_dinheiro += float(a.valor_total)
-        elif a.forma_pagamento == 'CARTAO': pgt_cartao += float(a.valor_total)
-        elif a.forma_pagamento == 'MISTO':
-            # Assumindo simplificação: No misto, geralmente sabemos o que foi o que, 
-            # mas aqui vamos dividir meio a meio ou precisaria de mais campos. 
-            # Vou somar ao 'Dinheiro' e 'Pix' genericamente para o exemplo:
-            pgt_dinheiro += float(a.valor_1)
-            pgt_pix += float(a.valor_2)
+        if a.forma_pagamento == 'MISTO':
+            if a.tipo_pagamento_1 in totais_pgt: totais_pgt[a.tipo_pagamento_1] += float(a.valor_1)
+            if a.tipo_pagamento_2 in totais_pgt: totais_pgt[a.tipo_pagamento_2] += float(a.valor_2)
+        elif a.forma_pagamento in totais_pgt:
+            totais_pgt[a.forma_pagamento] += float(a.valor_total)
 
-    # 2. Contagem por Barbeiro (Regra: Com Barba conta 2)
-    stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
-    for a in agendamentos:
-        pontos = 2 if a.com_barba or a.servico == 'COMPLETO' else 1
-        if a.barbeiro in stats_barbeiros:
-            stats_barbeiros[a.barbeiro] += pontos
-
-    # 3. Serviços mais realizados
+    # Gráficos de Serviços e Barbeiros
+    stats_barbeiros = {}
     stats_servicos = {}
     for a in agendamentos:
-        nome_servico = a.get_servico_display() # Pega o nome bonito
-        stats_servicos[nome_servico] = stats_servicos.get(nome_servico, 0) + 1
-        if a.com_barba:
-            stats_servicos['Barba Adicional'] = stats_servicos.get('Barba Adicional', 0) + 1
+        pts = 2 if a.com_barba or a.servico == 'COMPLETO' else 1
+        stats_barbeiros[a.barbeiro] = stats_barbeiros.get(a.barbeiro, 0) + pts
+        stats_servicos[a.get_servico_display()] = stats_servicos.get(a.get_servico_display(), 0) + 1
 
     context = {
-        'agendamentos': agendamentos,
+        'agendamentos': agendamentos, 'saidas': saidas, 'vendas': vendas,
         'data_filtro': data_filtro,
-        'kpi_agendamentos': total_agendamentos,
-        'kpi_saidas': total_saidas,
-        'kpi_vendas': total_vendas,
-        'kpi_lucro': lucro_liquido,
-        # Dados convertidos para JSON para o Javascript ler
-        'chart_pgt_labels': json.dumps(['Pix', 'Dinheiro', 'Cartão']),
-        'chart_pgt_data': json.dumps([pgt_pix, pgt_dinheiro, pgt_cartao]),
-        'chart_barbeiros_labels': json.dumps(list(stats_barbeiros.keys())),
-        'chart_barbeiros_data': json.dumps(list(stats_barbeiros.values())),
-        'chart_servicos_labels': json.dumps(list(stats_servicos.keys())),
-        'chart_servicos_data': json.dumps(list(stats_servicos.values())),
-        # Data atual para o formulário
-        'hora_agora': datetime.now().strftime("%H:%M") 
+        'kpi_agend': total_agend, 'kpi_vend': total_vend, 'kpi_said': total_said, 'kpi_lucro': lucro,
+        
+        # Dados JSON para o JavaScript
+        'chart_pgt_labels': json.dumps(['Dinheiro', 'Pix', 'Cartão']),
+        'chart_pgt_data': json.dumps([totais_pgt['DINHEIRO'], totais_pgt['PIX'], totais_pgt['CARTAO']]),
+        'chart_barb_labels': json.dumps(list(stats_barbeiros.keys())),
+        'chart_barb_data': json.dumps(list(stats_barbeiros.values())),
+        'chart_serv_labels': json.dumps(list(stats_servicos.keys())),
+        'chart_serv_data': json.dumps(list(stats_servicos.values())),
+        'hora_agora': datetime.now().strftime("%H:%M")
     }
     return render(request, 'index.html', context)
 
+# Funções de Deletar
 def deletar_agendamento(request, id):
-    item = get_object_or_404(Agendamento, id=id)
-    item.delete()
-    messages.warning(request, "Item apagado com sucesso.")
-    return redirect('home')
+    get_object_or_404(Agendamento, id=id).delete(); return redirect('home')
+def deletar_venda(request, id):
+    get_object_or_404(Venda, id=id).delete(); return redirect('home')
+def deletar_saida(request, id):
+    get_object_or_404(Saida, id=id).delete(); return redirect('home')

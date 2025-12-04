@@ -1,70 +1,43 @@
 from django.db import models
 from datetime import date
 
-# --- OPÇÕES (Menus Dropdown) ---
-OPCOES_BARBEIROS = [
-    ('LUCAS', 'Lucas Borges'),
-    ('ALUIZIO', 'Aluízio'),
-    ('ERIK', 'Erik'),
-]
-
 OPCOES_SERVICOS = [
-    ('DEGRADE', 'Degradê'),
-    ('PEZIM', 'Pezim'),
-    ('BARBA', 'Barba'),
-    ('SOCIAL', 'Social'),
-    ('COMPLETO', 'Combo Completo'),
-    ('OUTRO', 'Outro'),
+    ('DEGRADE', 'Degradê'), ('SOCIAL', 'Social'), ('PEZIM', 'Pezim'),
+    ('BARBA', 'Barba'), ('SOBRANCELHA', 'Sobrancelha'), ('LUZES', 'Luzes'),
+    ('PLATINADO', 'Platinado'), ('ALISAMENTO', 'Alisamento'),
+    ('PIGMENTACAO', 'Pigmentação'), ('COMPLETO', 'Combo Completo'), ('OUTRO', 'Outro')
 ]
 
-OPCOES_PAGAMENTO = [
-    ('DINHEIRO', 'Dinheiro'),
-    ('PIX', 'Pix'),
-    ('CARTAO', 'Cartão'),
-    ('MISTO', 'Misto (Dinheiro/Pix/Cartão)'),
-]
-
-# --- TABELAS ---
+OPCOES_BARBEIROS = [('LUCAS', 'Lucas Borges'), ('ALUIZIO', 'Aluízio'), ('ERIK', 'Erik')]
+OPCOES_VENDEDORES = OPCOES_BARBEIROS + [('FABRICIO', 'Fabrício')]
+OPCOES_PAGAMENTO = [('DINHEIRO', 'Dinheiro'), ('PIX', 'Pix'), ('CARTAO', 'Cartão'), ('MISTO', 'Misto')]
 
 class Agendamento(models.Model):
-    data = models.DateField(default=date.today, verbose_name="Data do Corte")
-    horario = models.TimeField(verbose_name="Horário", null=True, blank=True) # Opcional
+    data = models.DateField(default=date.today)
+    horario = models.TimeField()
     cliente = models.CharField(max_length=100)
-    
     barbeiro = models.CharField(max_length=20, choices=OPCOES_BARBEIROS)
     servico = models.CharField(max_length=20, choices=OPCOES_SERVICOS)
-    
-    # A tua lógica de "Com Barba" vira uma caixinha de marcar (Sim/Não)
-    com_barba = models.BooleanField(default=False, verbose_name="Inclui Barba (+R$)?")
-    
+    com_barba = models.BooleanField(default=False)
     forma_pagamento = models.CharField(max_length=20, choices=OPCOES_PAGAMENTO)
+    valor_total = models.DecimalField(max_digits=8, decimal_places=2)
     
-    # Valores Financeiros
-    valor_total = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Valor Total (R$)")
-    
-    # Campos para Pagamento Misto (opcionais)
-    valor_1 = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name="Parte 1 (Misto)")
-    valor_2 = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name="Parte 2 (Misto)")
-    
-    criado_em = models.DateTimeField(auto_now_add=True) # Para saberes quando foi registrado
+    # Misto
+    valor_1 = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    tipo_pagamento_1 = models.CharField(max_length=20, blank=True, null=True)
+    valor_2 = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    tipo_pagamento_2 = models.CharField(max_length=20, blank=True, null=True)
 
-    def __str__(self):
-        return f"{self.cliente} - {self.servico} ({self.barbeiro})"
-
-class Saida(models.Model):
-    data = models.DateField(default=date.today)
-    descricao = models.CharField(max_length=200, verbose_name="Descrição da Despesa")
-    valor = models.DecimalField(max_digits=8, decimal_places=2)
-    categoria = models.CharField(max_length=50, default="Geral")
-
-    def __str__(self):
-        return f"Saída: {self.descricao} - R$ {self.valor}"
+    criado_em = models.DateTimeField(auto_now_add=True)
 
 class Venda(models.Model):
     data = models.DateField(default=date.today)
-    item = models.CharField(max_length=200, verbose_name="Produto Vendido")
+    item = models.CharField(max_length=200, verbose_name="Descrição do Produto")
     valor = models.DecimalField(max_digits=8, decimal_places=2)
-    vendedor = models.CharField(max_length=50, choices=OPCOES_BARBEIROS)
+    vendedor = models.CharField(max_length=50, choices=OPCOES_VENDEDORES)
 
-    def __str__(self):
-        return f"Venda: {self.item} - {self.vendedor}"
+class Saida(models.Model):
+    data = models.DateField(default=date.today)
+    descricao = models.CharField(max_length=200, verbose_name="Descrição da Saída")
+    valor = models.DecimalField(max_digits=8, decimal_places=2)
+    # Categoria removida conforme solicitado
