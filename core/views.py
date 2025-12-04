@@ -125,13 +125,24 @@ def home(request):
                         raw_pgt = str(row[5]).upper().strip()
                         raw_servico = str(row[3]).upper().strip()
 
-                        # --- LÓGICA INTELIGENTE BARBEIROS ---
-                        # Identifica quem é, mesmo que esteja escrito "Lucas Borges"
+                        # --- LÓGICA INTELIGENTE BARBEIROS (CORRIGIDA) ---
+                        # Agora aceita com ou sem acento!
                         chave_barbeiro = 'OUTROS'
-                        if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
-                        elif 'ALUIZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
-                        elif 'ERIK' in raw_barbeiro: chave_barbeiro = 'ERIK'
-                        elif 'FABRICIO' in raw_barbeiro: chave_barbeiro = 'FABRICIO'
+                        
+                        # Verifica Lucas
+                        if 'LUCAS' in raw_barbeiro: 
+                            chave_barbeiro = 'LUCAS'
+                        
+                        # Verifica Aluízio (COM ou SEM acento)
+                        elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: 
+                            chave_barbeiro = 'ALUIZIO'
+                        
+                        # Verifica Erik (ou Erick com CK, por precaução)
+                        elif 'ERIK' in raw_barbeiro or 'ERICK' in raw_barbeiro: 
+                            chave_barbeiro = 'ERIK'
+                            
+                        elif 'FABRICIO' in raw_barbeiro or 'FABRÍCIO' in raw_barbeiro: 
+                            chave_barbeiro = 'FABRICIO'
 
                         item = {
                             'row_id': i + 1, 
