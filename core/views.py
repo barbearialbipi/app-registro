@@ -34,7 +34,7 @@ def login_view(request):
         else: return render(request, 'login.html', {'erro': 'Senha incorreta!'})
     return render(request, 'login.html')
 
-# --- HOME (AQUI ESTÁ A MÁGICA DA CORREÇÃO) ---
+# --- HOME ---
 def home(request):
     if not request.session.get('autenticado'): return redirect('login')
     data_filtro = request.GET.get('data_filtro', date.today().strftime('%Y-%m-%d'))
@@ -53,19 +53,24 @@ def home(request):
                 v1 = request.POST.get('valor_1', '0').replace(',', '.')
                 v2 = request.POST.get('valor_2', '0').replace(',', '.')
                 pgt_principal = request.POST.get('pagamento')
-                
                 total = (float(v1) + float(v2)) if pgt_principal == 'MISTO' else request.POST.get('valor', '0').replace(',', '.')
                 
-                # Salva os dados normalizando para MAIÚSCULO para evitar erros futuros
+                servico_nome = request.POST.get('servico')
+                tem_barba = request.POST.get('com_barba') == 'on'
+                
+                # Salva na planilha como "Social com Barba"
+                if tem_barba:
+                    servico_nome = f"{servico_nome} com Barba"
+
                 aba.append_row([
                     request.POST.get('data'),
                     request.POST.get('horario'),
                     request.POST.get('cliente'),
-                    request.POST.get('servico'),
-                    request.POST.get('barbeiro').upper(), # Força salvar em maiúsculo
-                    pgt_principal.upper(),                # Força salvar em maiúsculo
+                    servico_nome,
+                    request.POST.get('barbeiro').upper(), 
+                    pgt_principal.upper(),                
                     v1, v2, total,
-                    "Sim" if request.POST.get('com_barba') == 'on' else "Não",
+                    "-",
                     request.POST.get('tipo_pagamento_1', '-').upper(),
                     request.POST.get('tipo_pagamento_2', '-').upper()
                 ])
@@ -94,12 +99,11 @@ def home(request):
         return redirect('home')
 
     # ==========================================
-    # 2. LER (GET) COM INTELIGÊNCIA DE DADOS
+    # 2. LER (GET)
     # ==========================================
     agendamentos = []; vendas = []; saidas = []
     kpi_agend = 0; kpi_vend = 0; kpi_said = 0
     
-    # Inicializa os contadores com 0 para garantir que aparecem no gráfico
     stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
     totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     stats_servicos = {}
@@ -108,7 +112,6 @@ def home(request):
     try:
         planilha = conectar_google()
         if planilha:
-            # --- LER AGENDAMENTOS ---
             rows_agend = planilha.worksheet("Agendamentos").get_all_values()
             for i, row in enumerate(rows_agend):
                 if i == 0: continue 
@@ -120,71 +123,63 @@ def home(request):
                         val_str = str(row[8]).replace(',', '.')
                         val = float(val_str) if val_str else 0.0
                         
-                        # Normaliza dados brutos (Converte para MAIÚSCULO e remove espaços)
                         raw_barbeiro = str(row[4]).upper().strip()
                         raw_pgt = str(row[5]).upper().strip()
-                        raw_servico = str(row[3]).upper().strip()
+                        raw_servico = str(row[3]).strip()
 
-                        # --- LÓGICA INTELIGENTE BARBEIROS (CORRIGIDA) ---
-                        # Agora aceita com ou sem acento!
+                        # Identificação Barbeiros
                         chave_barbeiro = 'OUTROS'
-                        
-                        # Verifica Lucas
-                        if 'LUCAS' in raw_barbeiro: 
-                            chave_barbeiro = 'LUCAS'
-                        
-                        # Verifica Aluízio (COM ou SEM acento)
-                        elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: 
-                            chave_barbeiro = 'ALUIZIO'
-                        
-                        # Verifica Erik (ou Erick com CK, por precaução)
-                        elif 'ERIK' in raw_barbeiro or 'ERICK' in raw_barbeiro: 
-                            chave_barbeiro = 'ERIK'
-                            
-                        elif 'FABRICIO' in raw_barbeiro or 'FABRÍCIO' in raw_barbeiro: 
-                            chave_barbeiro = 'FABRICIO'
+                        if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
+                        elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
+                        elif 'ERIK' in raw_barbeiro or 'ERICK' in raw_barbeiro: chave_barbeiro = 'ERIK'
+                        elif 'FABRICIO' in raw_barbeiro or 'FABRÍCIO' in raw_barbeiro: chave_barbeiro = 'FABRICIO'
 
                         item = {
                             'row_id': i + 1, 
                             'horario': row[1], 
                             'cliente': row[2], 
-                            'servico': row[3], # Mantém o original para exibir na lista
-                            'barbeiro': row[4], # Mantém o original para exibir na lista
+                            'servico': raw_servico, 
+                            'barbeiro': row[4], 
                             'forma_pagamento': row[5], 
                             'valor_total': val,
-                            'com_barba': row[9] == "Sim",
                             'tipo_pagamento_1': row[10],
                             'tipo_pagamento_2': row[11]
                         }
                         agendamentos.append(item)
                         kpi_agend += val
                         
-                        # --- CÁLCULO DE PRODUTIVIDADE ---
+                        # --- CÁLCULO DE PONTOS (BARBEIRO) ---
+                        servico_upper = raw_servico.upper()
+                        e_combo = ('COM BARBA' in servico_upper) or ('+ BARBA' in servico_upper) or ('COMPLETO' in servico_upper)
+                        
                         if chave_barbeiro in stats_barbeiros:
-                            pts = 2 if (item['com_barba'] or 'COMPLETO' in raw_servico) else 1
+                            # Se for combo, soma 2 atendimentos para o barbeiro
+                            pts = 2 if e_combo else 1
                             stats_barbeiros[chave_barbeiro] += pts
                             total_atendimentos += pts
                         
-                        # --- CÁLCULO DE SERVIÇOS ---
-                        # Simplifica nomes de serviços para o gráfico ficar bonito
-                        nome_serv = raw_servico.split()[0] # Pega só a primeira palavra (ex: "CORTE" de "Corte Simples")
-                        stats_servicos[nome_serv] = stats_servicos.get(nome_serv, 0) + 1
+                        # --- GRÁFICO DE SERVIÇOS (LÓGICA NOVA) ---
+                        # 1. Pega o nome base (Ex: "SOCIAL COM BARBA" vira "SOCIAL")
+                        nome_serv_base = servico_upper.replace(' COM BARBA', '').replace('+ BARBA', '').strip()
                         
-                        # --- CÁLCULO DE PAGAMENTOS (GRÁFICO) ---
+                        # 2. Soma 1 para o corte (Social)
+                        stats_servicos[nome_serv_base] = stats_servicos.get(nome_serv_base, 0) + 1
+                        
+                        # 3. Se tiver barba junto, SOMA +1 para a categoria "BARBA" separadamente
+                        if e_combo:
+                            stats_servicos['BARBA'] = stats_servicos.get('BARBA', 0) + 1
+                        
+                        # --- PAGAMENTOS ---
                         if raw_pgt == 'MISTO':
-                            # Se for misto, tenta somar as parciais aos totais corretos
                             try:
                                 v1 = float(str(row[6]).replace(',', '.') or 0)
-                                t1 = str(row[10]).upper().strip() # Tipo 1
+                                t1 = str(row[10]).upper().strip()
                                 v2 = float(str(row[7]).replace(',', '.') or 0)
-                                t2 = str(row[11]).upper().strip() # Tipo 2
-                                
+                                t2 = str(row[11]).upper().strip()
                                 if t1 in totais_pgt: totais_pgt[t1] += v1
                                 if t2 in totais_pgt: totais_pgt[t2] += v2
-                            except: pass # Se falhar, ignora o misto no gráfico
+                            except: pass
                         else:
-                            # Pagamento normal (Pix, Dinheiro, Cartão)
-                            # Verifica se a palavra contem os tipos chaves
                             if 'PIX' in raw_pgt: totais_pgt['PIX'] += val
                             elif 'DINHEIRO' in raw_pgt: totais_pgt['DINHEIRO'] += val
                             elif 'CART' in raw_pgt: totais_pgt['CARTAO'] += val
@@ -194,7 +189,7 @@ def home(request):
             
             agendamentos.sort(key=lambda x: x['horario'], reverse=True)
 
-            # --- VENDAS ---
+            # (O restante do código de Vendas e Saídas permanece igual...)
             rows_vend = planilha.worksheet("Vendas").get_all_values()
             for i, row in enumerate(rows_vend):
                 if i == 0: continue
@@ -205,7 +200,6 @@ def home(request):
                         kpi_vend += val
                     except: pass
 
-            # --- SAIDAS ---
             rows_said = planilha.worksheet("Saidas").get_all_values()
             for i, row in enumerate(rows_said):
                 if i == 0: continue
@@ -225,7 +219,6 @@ def home(request):
         'agendamentos': agendamentos, 'vendas': vendas, 'saidas': saidas,
         'kpi_agend': kpi_agend, 'kpi_vend': kpi_vend, 'kpi_said': kpi_said, 'kpi_lucro': kpi_lucro,
         'stats_barbeiros': stats_barbeiros, 'total_atendimentos': total_atendimentos,
-        # Enviando dados para os gráficos
         'chart_pgt_labels': json.dumps(['Dinheiro', 'Pix', 'Cartão']),
         'chart_pgt_data': json.dumps([totais_pgt['DINHEIRO'], totais_pgt['PIX'], totais_pgt['CARTAO']]),
         'chart_barb_labels': json.dumps(list(stats_barbeiros.keys())),
