@@ -1,48 +1,29 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Agendamento, Saida, Venda
-from django.db.models import Sum
 from datetime import datetime, date
 import json
 import os
-
-# --- IMPORTAÇÕES DO GOOGLE SHEETS ---
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-def salvar_no_sheets(nome_aba, dados_linha):
-    """
-    Função auxiliar para conectar e salvar no Google Sheets.
-    Procura o credentials.json na pasta atual ou em /etc/secrets/ (padrão Render)
-    """
+# --- CONEXÃO ---
+def conectar_google():
     try:
-        # Tenta achar o arquivo no local padrão ou na pasta de segredos do Render
         caminho_local = 'credentials.json'
         caminho_render = '/etc/secrets/credentials.json'
+        arquivo = caminho_local if os.path.exists(caminho_local) else caminho_render
         
-        arquivo_final = caminho_local if os.path.exists(caminho_local) else caminho_render
-        
-        # Se não achar em lugar nenhum, desiste (evita erro fatal no site)
-        if not os.path.exists(arquivo_final):
-            print(f"⚠️ Aviso: credentials.json não encontrado em {arquivo_final}")
-            return False
+        if not os.path.exists(arquivo): return None
 
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name(arquivo_final, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_name(arquivo, scope)
         client = gspread.authorize(creds)
-
-        # ATUALIZADO: Nome da planilha corrigido para "Barbeariacontrole"
-        sheet = client.open("Barbeariacontrole") 
-        aba = sheet.worksheet(nome_aba) # Seleciona a aba (Agendamentos, Vendas, Saidas)
-        
-        aba.append_row(dados_linha)
-        return True
+        return client.open("Barbeariacontrole")
     except Exception as e:
-        print(f"❌ Erro ao salvar no Google Sheets: {e}")
-        return False
+        print(f"Erro Google: {e}")
+        return None
 
-# --- FUNÇÕES DE LOGIN E HOME ---
-
+# --- LOGIN ---
 def login_view(request):
     if request.session.get('autenticado'): return redirect('home')
     if request.method == "POST":
@@ -53,128 +34,127 @@ def login_view(request):
         else: return render(request, 'login.html', {'erro': 'Senha incorreta!'})
     return render(request, 'login.html')
 
+# --- HOME ---
 def home(request):
     if not request.session.get('autenticado'): return redirect('login')
+    data_filtro = request.GET.get('data_filtro', date.today().strftime('%Y-%m-%d'))
 
+    # SALVAR (POST)
     if request.method == "POST":
-        tipo_form = request.POST.get('tipo_formulario')
+        try:
+            planilha = conectar_google()
+            tipo_form = request.POST.get('tipo_formulario')
 
-        # >>> AGENDAMENTO
-        if tipo_form == 'agendamento':
-            try:
-                data = request.POST.get('data')
-                horario = request.POST.get('horario')
-                cliente = request.POST.get('cliente')
-                servico = request.POST.get('servico')
-                barbeiro = request.POST.get('barbeiro')
-                pagamento = request.POST.get('pagamento')
-                com_barba = request.POST.get('com_barba') == 'on'
+            if tipo_form == 'agendamento':
+                aba = planilha.worksheet("Agendamentos")
+                v1 = request.POST.get('valor_1', '0').replace(',', '.')
+                v2 = request.POST.get('valor_2', '0').replace(',', '.')
+                pgt = request.POST.get('pagamento')
+                total = (float(v1) + float(v2)) if pgt == 'MISTO' else request.POST.get('valor', '0').replace(',', '.')
                 
-                v1 = 0; tipo1 = None; v2 = 0; tipo2 = None; valor_total = 0
+                aba.append_row([
+                    request.POST.get('data'), 
+                    request.POST.get('horario'), 
+                    request.POST.get('cliente'), 
+                    request.POST.get('servico'), 
+                    request.POST.get('barbeiro'), 
+                    pgt, v1, v2, total, 
+                    "Sim" if request.POST.get('com_barba') == 'on' else "Não"
+                ])
+                messages.success(request, "Salvo no Google Sheets!")
 
-                if pagamento == 'MISTO':
-                    v1 = float(request.POST.get('valor_1', '0').replace(',', '.'))
-                    tipo1 = request.POST.get('tipo_pagamento_1')
-                    v2 = float(request.POST.get('valor_2', '0').replace(',', '.'))
-                    tipo2 = request.POST.get('tipo_pagamento_2')
-                    valor_total = v1 + v2
-                else:
-                    valor_total = float(request.POST.get('valor', '0').replace(',', '.'))
+            elif tipo_form == 'venda':
+                aba = planilha.worksheet("Vendas")
+                aba.append_row([
+                    request.POST.get('data'),
+                    request.POST.get('item'),
+                    request.POST.get('valor', '0').replace(',', '.'),
+                    request.POST.get('vendedor')
+                ])
+                messages.success(request, "Venda Salva!")
 
-                # 1. Salvar no Django
-                Agendamento.objects.create(
-                    data=data, horario=horario, cliente=cliente, servico=servico,
-                    barbeiro=barbeiro, forma_pagamento=pagamento,
-                    valor_total=valor_total, com_barba=com_barba,
-                    valor_1=v1, tipo_pagamento_1=tipo1, valor_2=v2, tipo_pagamento_2=tipo2
-                )
-                
-                # 2. Salvar no Google Sheets (Aba: Agendamentos)
-                # Colunas: Data, Horário, Cliente, Serviço, Barbeiro, Pagamento, Valor 1, Valor 2, Valor Total
-                dados_gs = [
-                    data, horario, cliente, servico, barbeiro, pagamento, 
-                    v1 if pagamento == 'MISTO' else 0, 
-                    v2 if pagamento == 'MISTO' else 0, 
-                    valor_total
-                ]
-                salvar_no_sheets("Agendamentos", dados_gs)
+            elif tipo_form == 'saida':
+                aba = planilha.worksheet("Saidas")
+                aba.append_row([
+                    request.POST.get('data'),
+                    request.POST.get('descricao'),
+                    request.POST.get('valor', '0').replace(',', '.')
+                ])
+                messages.warning(request, "Saída Salva!")
 
-                messages.success(request, f"Agendamento salvo!")
-            except: messages.error(request, "Erro ao salvar agendamento.")
-
-        # >>> VENDA
-        elif tipo_form == 'venda':
-            try:
-                data = request.POST.get('data')
-                item = request.POST.get('item')
-                val = float(request.POST.get('valor', '0').replace(',', '.'))
-                vend = request.POST.get('vendedor')
-
-                # Django
-                Venda.objects.create(data=data, item=item, valor=val, vendedor=vend)
-                
-                # Google Sheets (Aba: Vendas) -> Data, Item, Valor, Vendedor
-                salvar_no_sheets("Vendas", [data, item, val, vend])
-                
-                messages.success(request, "Venda registrada!")
-            except: messages.error(request, "Erro ao salvar venda.")
-
-        # >>> SAÍDA
-        elif tipo_form == 'saida':
-            try:
-                data = request.POST.get('data')
-                desc = request.POST.get('descricao')
-                val = float(request.POST.get('valor', '0').replace(',', '.'))
-
-                # Django
-                Saida.objects.create(data=data, descricao=desc, valor=val)
-                
-                # Google Sheets (Aba: Saidas) -> Data, Descrição, Valor
-                salvar_no_sheets("Saidas", [data, desc, val])
-
-                messages.warning(request, "Saída registrada.")
-            except: messages.error(request, "Erro ao salvar saída.")
-
+        except Exception as e: messages.error(request, f"Erro: {e}")
         return redirect('home')
 
-    # --- EXIBIÇÃO (GET) ---
-    data_filtro = request.GET.get('data_filtro', date.today().strftime('%Y-%m-%d'))
-    agendamentos = Agendamento.objects.filter(data=data_filtro).order_by('-horario')
-    saidas = Saida.objects.filter(data=data_filtro).order_by('-id')
-    vendas = Venda.objects.filter(data=data_filtro).order_by('-id')
-
-    # KPIs
-    total_agend = agendamentos.aggregate(Sum('valor_total'))['valor_total__sum'] or 0
-    total_vend = vendas.aggregate(Sum('valor'))['valor__sum'] or 0
-    total_said = saidas.aggregate(Sum('valor'))['valor__sum'] or 0
-    lucro = (total_agend + total_vend) - total_said
-
-    # Gráfico Pagamentos
-    totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
+    # LER DADOS (GET)
+    agendamentos = []; vendas = []; saidas = []
+    kpi_agend = 0; kpi_vend = 0; kpi_said = 0
     stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
-    total_atendimentos_dia = 0 
+    totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     stats_servicos = {}
+    total_atendimentos = 0
 
-    for a in agendamentos:
-        # Pagamento
-        if a.forma_pagamento == 'MISTO':
-            if a.tipo_pagamento_1 in totais_pgt: totais_pgt[a.tipo_pagamento_1] += float(a.valor_1)
-            if a.tipo_pagamento_2 in totais_pgt: totais_pgt[a.tipo_pagamento_2] += float(a.valor_2)
-        elif a.forma_pagamento in totais_pgt:
-            totais_pgt[a.forma_pagamento] += float(a.valor_total)
-        
-        # Produtividade
-        pts = 2 if a.com_barba or a.servico == 'COMPLETO' else 1
-        if a.barbeiro in stats_barbeiros: stats_barbeiros[a.barbeiro] += pts
-        total_atendimentos_dia += pts
-        
-        stats_servicos[a.get_servico_display()] = stats_servicos.get(a.get_servico_display(), 0) + 1
+    try:
+        planilha = conectar_google()
+        if planilha:
+            # AGENDAMENTOS (Lê tudo e pega o número da linha 'i')
+            # enumerate(..., 1) faz a contagem começar em 1 (linha 1 do Excel)
+            rows_agend = planilha.worksheet("Agendamentos").get_all_values()
+            for i, row in enumerate(rows_agend):
+                if i == 0: continue # Pula cabeçalho
+                if len(row) > 0 and row[0] == data_filtro:
+                    try:
+                        val = float(str(row[8]).replace(',', '.'))
+                        # row_id = i + 1 (Porque o gspread conta a partir de 1)
+                        item = {
+                            'row_id': i + 1, 
+                            'horario': row[1], 'cliente': row[2], 'servico': row[3],
+                            'barbeiro': row[4], 'forma_pagamento': row[5], 'valor_total': val,
+                            'com_barba': row[9] == "Sim" if len(row) > 9 else False
+                        }
+                        agendamentos.append(item)
+                        kpi_agend += val
+                        
+                        # Gráficos
+                        pts = 2 if (item['com_barba'] or item['servico'] == 'COMPLETO') else 1
+                        if item['barbeiro'] in stats_barbeiros: stats_barbeiros[item['barbeiro']] += pts
+                        total_atendimentos += pts
+                        stats_servicos[item['servico']] = stats_servicos.get(item['servico'], 0) + 1
+                        if item['forma_pagamento'] in totais_pgt: totais_pgt[item['forma_pagamento']] += val
+                    except: pass
+            
+            agendamentos.sort(key=lambda x: x['horario'], reverse=True)
+
+            # VENDAS
+            rows_vend = planilha.worksheet("Vendas").get_all_values()
+            for i, row in enumerate(rows_vend):
+                if i == 0: continue
+                if len(row) > 0 and row[0] == data_filtro:
+                    try:
+                        val = float(str(row[2]).replace(',', '.'))
+                        vendas.append({'row_id': i + 1, 'item': row[1], 'valor': val, 'vendedor': row[3]})
+                        kpi_vend += val
+                    except: pass
+
+            # SAIDAS
+            rows_said = planilha.worksheet("Saidas").get_all_values()
+            for i, row in enumerate(rows_said):
+                if i == 0: continue
+                if len(row) > 0 and row[0] == data_filtro:
+                    try:
+                        val = float(str(row[2]).replace(',', '.'))
+                        saidas.append({'row_id': i + 1, 'descricao': row[1], 'valor': val})
+                        kpi_said += val
+                    except: pass
+
+    except Exception as e: print(f"Erro leitura: {e}")
+
+    kpi_lucro = (kpi_agend + kpi_vend) - kpi_said
 
     context = {
-        'agendamentos': agendamentos, 'saidas': saidas, 'vendas': vendas,
         'data_filtro': data_filtro,
-        'kpi_agend': total_agend, 'kpi_vend': total_vend, 'kpi_said': total_said, 'kpi_lucro': lucro,
-        'stats_barbeiros': stats_barbeiros, 'total_atendimentos': total_atendimentos_dia,
+        'agendamentos': agendamentos, 'vendas': vendas, 'saidas': saidas,
+        'kpi_agend': kpi_agend, 'kpi_vend': kpi_vend, 'kpi_said': kpi_said, 'kpi_lucro': kpi_lucro,
+        'stats_barbeiros': stats_barbeiros, 'total_atendimentos': total_atendimentos,
         'chart_pgt_labels': json.dumps(['Dinheiro', 'Pix', 'Cartão']),
         'chart_pgt_data': json.dumps([totais_pgt['DINHEIRO'], totais_pgt['PIX'], totais_pgt['CARTAO']]),
         'chart_barb_labels': json.dumps(list(stats_barbeiros.keys())),
@@ -185,13 +165,17 @@ def home(request):
     }
     return render(request, 'index.html', context)
 
-# Deletes
-def deletar_agendamento(request, id):
-    if request.session.get('autenticado'): get_object_or_404(Agendamento, id=id).delete()
-    return redirect('home')
-def deletar_venda(request, id):
-    if request.session.get('autenticado'): get_object_or_404(Venda, id=id).delete()
-    return redirect('home')
-def deletar_saida(request, id):
-    if request.session.get('autenticado'): get_object_or_404(Saida, id=id).delete()
+# --- FUNÇÕES DE DELETAR (DIRETO NO SHEETS) ---
+def deletar_item(request, tipo, row_id):
+    if not request.session.get('autenticado'): return redirect('login')
+    try:
+        planilha = conectar_google()
+        if tipo == 'agendamento': aba = planilha.worksheet("Agendamentos")
+        elif tipo == 'venda': aba = planilha.worksheet("Vendas")
+        elif tipo == 'saida': aba = planilha.worksheet("Saidas")
+        
+        aba.delete_rows(row_id) # O comando cirúrgico
+        messages.warning(request, "Item apagado da planilha.")
+    except Exception as e:
+        messages.error(request, f"Erro ao apagar: {e}")
     return redirect('home')

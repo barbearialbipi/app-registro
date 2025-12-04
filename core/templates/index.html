@@ -571,7 +571,7 @@
                                 </div>
                             </td>
                             <td data-label="Excluir" style="text-align: right;">
-                                <a href="{% url 'deletar_agendamento' a.id %}" class="btn-trash" onclick="return confirm('Tem certeza que deseja excluir?');">🗑️</a>
+                                <a href="{% url 'deletar_item' 'agendamento' a.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza que deseja excluir?');">🗑️</a>
                             </td>
                         </tr>
                         {% empty %}
@@ -651,7 +651,7 @@
                             <td data-label="Vendedor">{{ v.get_vendedor_display }}</td>
                             <td data-label="Valor">R$ {{ v.valor|floatformat:2 }}</td>
                             <td data-label="Excluir" style="text-align: right;">
-                                <a href="{% url 'deletar_venda' v.id %}" class="btn-trash" onclick="return confirm('Tem certeza?');">🗑️</a>
+                                <a href="{% url 'deletar_item' 'venda' v.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza?');">🗑️</a>
                             </td>
                         </tr>
                         {% empty %}
@@ -696,7 +696,7 @@
                             <td data-label="Descrição">{{ s.descricao }}</td>
                             <td data-label="Valor">R$ {{ s.valor|floatformat:2 }}</td>
                             <td data-label="Excluir" style="text-align: right;">
-                                <a href="{% url 'deletar_saida' s.id %}" class="btn-trash" onclick="return confirm('Tem certeza?');">🗑️</a>
+                                <a href="{% url 'deletar_item' 'saida' s.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza?');">🗑️</a>
                             </td>
                         </tr>
                         {% empty %}
