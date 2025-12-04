@@ -538,52 +538,60 @@
                 <h3 style="margin-top: 40px; margin-bottom: 20px;">📋 Lista de Cortes</h3>
                 
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Cliente</th>
-                            <th>Serviço</th>
-                            <th>Valor</th>
-                            <th style="text-align: right;">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in agendamentos %}
-                        <tr>
-                            <td data-label="Hora">{{ a.horario|time:"H:i" }}</td>
-                            <td data-label="Cliente"><strong>{{ a.cliente }}</strong></td>
-                            <td data-label="Serviço">
-                                {{ a.get_servico_display }}
-                                {% if a.com_barba %} 
-                                    <span style="color:#27ae60; font-weight:bold; font-size:0.85rem; margin-left:5px;">+Barba</span> 
-                                {% endif %}
-                            </td>
-                            <td data-label="Valor/Pgto">
-                                <div style="display:flex; flex-direction:column;">
-                                    <span>R$ {{ a.valor_total|floatformat:2 }}</span>
-                                    <span style="font-size:0.75rem; color:#888;">
-                                        {% if a.forma_pagamento == 'MISTO' %}
-                                            Misto ({{ a.tipo_pagamento_1|slice:":3" }}/{{ a.tipo_pagamento_2|slice:":3" }})
-                                        {% else %}
-                                            {{ a.get_forma_pagamento_display }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                            </td>
-                            <td data-label="Excluir" style="text-align: right;">
-                                <a href="{% url 'deletar_item' 'agendamento' a.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza que deseja excluir?');">🗑️</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" style="text-align:center; padding:30px; color:#999;">
-                                Nenhum atendimento registrado hoje.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <thead>
+        <tr>
+            <th>Hora</th>
+            <th>Cliente</th>
+            <th>Barbeiro</th> <th>Serviço</th>
+            <th>Pagamento</th> <th>Valor</th>
+            <th style="text-align: right;">Ação</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in agendamentos %}
+        <tr>
+            <td data-label="Hora">{{ a.horario }}</td>
 
+            <td data-label="Cliente"><strong>{{ a.cliente }}</strong></td>
+
+            <td data-label="Barbeiro">
+                {{ a.barbeiro }}
+            </td>
+
+            <td data-label="Serviço">
+                {{ a.servico }}
+                {% if a.com_barba %} 
+                    <span style="color:#27ae60; font-weight:bold; font-size:0.85rem; margin-left:5px;">+Barba</span> 
+                {% endif %}
+            </td>
+
+            <td data-label="Pagamento">
+                {% if a.forma_pagamento == 'MISTO' %}
+                    <span style="font-size:0.9rem; color:#d35400; font-weight:bold;">
+                        Misto ({{ a.tipo_pagamento_1|slice:":3" }}/{{ a.tipo_pagamento_2|slice:":3" }})
+                    </span>
+                {% else %}
+                    {{ a.forma_pagamento }}
+                {% endif %}
+            </td>
+
+            <td data-label="Valor">
+                R$ {{ a.valor_total|floatformat:2 }}
+            </td>
+
+            <td data-label="Excluir" style="text-align: right;">
+                <a href="{% url 'deletar_item' 'agendamento' a.row_id %}" class="btn-trash" onclick="return confirm('Tem certeza que deseja excluir?');">🗑️</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" style="text-align:center; padding:30px; color:#999;">
+                Nenhum atendimento registrado hoje.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
                 <div class="produtividade-box">
                     <div class="prod-title">📊 Produtividade do Dia</div>
                     <div class="prod-item">
