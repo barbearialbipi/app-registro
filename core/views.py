@@ -34,13 +34,13 @@ def login_view(request):
         else: return render(request, 'login.html', {'erro': 'Senha incorreta!'})
     return render(request, 'login.html')
 
-# --- HOME ---
+# --- HOME (AQUI ESTÁ A MÁGICA DA CORREÇÃO) ---
 def home(request):
     if not request.session.get('autenticado'): return redirect('login')
     data_filtro = request.GET.get('data_filtro', date.today().strftime('%Y-%m-%d'))
 
     # ==========================================
-    # 1. SALVAR (POST) - Ajustado para tua Planilha
+    # 1. SALVAR (POST)
     # ==========================================
     if request.method == "POST":
         try:
@@ -50,43 +50,26 @@ def home(request):
             if tipo_form == 'agendamento':
                 aba = planilha.worksheet("Agendamentos")
                 
-                # Prepara valores
                 v1 = request.POST.get('valor_1', '0').replace(',', '.')
                 v2 = request.POST.get('valor_2', '0').replace(',', '.')
                 pgt_principal = request.POST.get('pagamento')
                 
                 total = (float(v1) + float(v2)) if pgt_principal == 'MISTO' else request.POST.get('valor', '0').replace(',', '.')
                 
-                # ORDEM DE GRAVAÇÃO (Baseado na tua imagem + Novos Campos no final)
-                # Col A(0): Data
-                # Col B(1): Horário
-                # Col C(2): Cliente
-                # Col D(3): Serviço
-                # Col E(4): Barbeiro
-                # Col F(5): Pagamento
-                # Col G(6): Valor 1
-                # Col H(7): Valor 2
-                # Col I(8): Valor Total (Aqui acaba a tua imagem atual)
-                # --- NOVAS COLUNAS QUE SERÃO CRIADAS AUTOMATICAMENTE ---
-                # Col J(9): Com Barba?
-                # Col K(10): Tipo Pagamento 1
-                # Col L(11): Tipo Pagamento 2
-
+                # Salva os dados normalizando para MAIÚSCULO para evitar erros futuros
                 aba.append_row([
-                    request.POST.get('data'),       # A
-                    request.POST.get('horario'),    # B
-                    request.POST.get('cliente'),    # C
-                    request.POST.get('servico'),    # D
-                    request.POST.get('barbeiro'),   # E
-                    pgt_principal,                  # F
-                    v1,                             # G
-                    v2,                             # H
-                    total,                          # I
-                    "Sim" if request.POST.get('com_barba') == 'on' else "Não", # J (Novo)
-                    request.POST.get('tipo_pagamento_1', '-'), # K (Novo)
-                    request.POST.get('tipo_pagamento_2', '-')  # L (Novo)
+                    request.POST.get('data'),
+                    request.POST.get('horario'),
+                    request.POST.get('cliente'),
+                    request.POST.get('servico'),
+                    request.POST.get('barbeiro').upper(), # Força salvar em maiúsculo
+                    pgt_principal.upper(),                # Força salvar em maiúsculo
+                    v1, v2, total,
+                    "Sim" if request.POST.get('com_barba') == 'on' else "Não",
+                    request.POST.get('tipo_pagamento_1', '-').upper(),
+                    request.POST.get('tipo_pagamento_2', '-').upper()
                 ])
-                messages.success(request, "Agendamento salvo com sucesso!")
+                messages.success(request, "Agendamento salvo!")
 
             elif tipo_form == 'venda':
                 aba = planilha.worksheet("Vendas")
@@ -111,10 +94,12 @@ def home(request):
         return redirect('home')
 
     # ==========================================
-    # 2. LER (GET) - Corrigido para os Índices da Imagem
+    # 2. LER (GET) COM INTELIGÊNCIA DE DADOS
     # ==========================================
     agendamentos = []; vendas = []; saidas = []
     kpi_agend = 0; kpi_vend = 0; kpi_said = 0
+    
+    # Inicializa os contadores com 0 para garantir que aparecem no gráfico
     stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
     totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     stats_servicos = {}
@@ -126,61 +111,79 @@ def home(request):
             # --- LER AGENDAMENTOS ---
             rows_agend = planilha.worksheet("Agendamentos").get_all_values()
             for i, row in enumerate(rows_agend):
-                if i == 0: continue # Pula cabeçalho
+                if i == 0: continue 
                 
-                # Filtra pela data e garante que a linha tem dados mínimos
                 if len(row) > 0 and row[0] == data_filtro:
                     try:
-                        # Se a linha for antiga e curta (só até coluna I), preenche o resto com vazio
-                        # Isso evita erro ao tentar ler as colunas novas (Barba/Tipos Pgt)
                         while len(row) < 12: row.append("")
 
-                        # LEITURA DOS DADOS (Mapeamento Correto)
-                        # row[8] é a Coluna I (Valor Total) na tua imagem
                         val_str = str(row[8]).replace(',', '.')
                         val = float(val_str) if val_str else 0.0
                         
+                        # Normaliza dados brutos (Converte para MAIÚSCULO e remove espaços)
+                        raw_barbeiro = str(row[4]).upper().strip()
+                        raw_pgt = str(row[5]).upper().strip()
+                        raw_servico = str(row[3]).upper().strip()
+
+                        # --- LÓGICA INTELIGENTE BARBEIROS ---
+                        # Identifica quem é, mesmo que esteja escrito "Lucas Borges"
+                        chave_barbeiro = 'OUTROS'
+                        if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
+                        elif 'ALUIZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
+                        elif 'ERIK' in raw_barbeiro: chave_barbeiro = 'ERIK'
+                        elif 'FABRICIO' in raw_barbeiro: chave_barbeiro = 'FABRICIO'
+
                         item = {
                             'row_id': i + 1, 
-                            'horario': row[1],   # Coluna B
-                            'cliente': row[2],   # Coluna C
-                            'servico': row[3],   # Coluna D
-                            'barbeiro': row[4],  # Coluna E
-                            'forma_pagamento': row[5], # Coluna F
+                            'horario': row[1], 
+                            'cliente': row[2], 
+                            'servico': row[3], # Mantém o original para exibir na lista
+                            'barbeiro': row[4], # Mantém o original para exibir na lista
+                            'forma_pagamento': row[5], 
                             'valor_total': val,
-                            # Novas colunas (se existirem na linha)
-                            'com_barba': row[9] == "Sim", 
+                            'com_barba': row[9] == "Sim",
                             'tipo_pagamento_1': row[10],
                             'tipo_pagamento_2': row[11]
                         }
                         agendamentos.append(item)
                         kpi_agend += val
                         
-                        # --- ESTATÍSTICAS ---
-                        # Contagem Barbeiros
-                        b_nome = item['barbeiro'] if item['barbeiro'] else 'Outros'
-                        if b_nome in stats_barbeiros:
-                            # Se tiver barba OU for completo conta em dobro (lógica exemplo)
-                            pts = 2 if (item['com_barba'] or 'COMPLETO' in item['servico'].upper()) else 1
-                            stats_barbeiros[b_nome] += pts
+                        # --- CÁLCULO DE PRODUTIVIDADE ---
+                        if chave_barbeiro in stats_barbeiros:
+                            pts = 2 if (item['com_barba'] or 'COMPLETO' in raw_servico) else 1
+                            stats_barbeiros[chave_barbeiro] += pts
                             total_atendimentos += pts
                         
-                        # Contagem Serviços
-                        s_nome = item['servico']
-                        stats_servicos[s_nome] = stats_servicos.get(s_nome, 0) + 1
+                        # --- CÁLCULO DE SERVIÇOS ---
+                        # Simplifica nomes de serviços para o gráfico ficar bonito
+                        nome_serv = raw_servico.split()[0] # Pega só a primeira palavra (ex: "CORTE" de "Corte Simples")
+                        stats_servicos[nome_serv] = stats_servicos.get(nome_serv, 0) + 1
                         
-                        # Contagem Pagamentos
-                        pgt = item['forma_pagamento']
-                        if pgt in totais_pgt: 
-                            totais_pgt[pgt] += val
+                        # --- CÁLCULO DE PAGAMENTOS (GRÁFICO) ---
+                        if raw_pgt == 'MISTO':
+                            # Se for misto, tenta somar as parciais aos totais corretos
+                            try:
+                                v1 = float(str(row[6]).replace(',', '.') or 0)
+                                t1 = str(row[10]).upper().strip() # Tipo 1
+                                v2 = float(str(row[7]).replace(',', '.') or 0)
+                                t2 = str(row[11]).upper().strip() # Tipo 2
+                                
+                                if t1 in totais_pgt: totais_pgt[t1] += v1
+                                if t2 in totais_pgt: totais_pgt[t2] += v2
+                            except: pass # Se falhar, ignora o misto no gráfico
+                        else:
+                            # Pagamento normal (Pix, Dinheiro, Cartão)
+                            # Verifica se a palavra contem os tipos chaves
+                            if 'PIX' in raw_pgt: totais_pgt['PIX'] += val
+                            elif 'DINHEIRO' in raw_pgt: totais_pgt['DINHEIRO'] += val
+                            elif 'CART' in raw_pgt: totais_pgt['CARTAO'] += val
 
                     except Exception as e: 
-                        # Printa no console do servidor para ajudar a debugar se der erro
-                        print(f"Erro na linha {i+1}: {e}")
+                        print(f"Erro processar linha {i+1}: {e}")
             
             agendamentos.sort(key=lambda x: x['horario'], reverse=True)
 
-            # --- LER VENDAS ---
+            # --- VENDAS ---
             rows_vend = planilha.worksheet("Vendas").get_all_values()
             for i, row in enumerate(rows_vend):
                 if i == 0: continue
@@ -191,7 +194,7 @@ def home(request):
                         kpi_vend += val
                     except: pass
 
-            # --- LER SAÍDAS ---
+            # --- SAIDAS ---
             rows_said = planilha.worksheet("Saidas").get_all_values()
             for i, row in enumerate(rows_said):
                 if i == 0: continue
@@ -211,6 +214,7 @@ def home(request):
         'agendamentos': agendamentos, 'vendas': vendas, 'saidas': saidas,
         'kpi_agend': kpi_agend, 'kpi_vend': kpi_vend, 'kpi_said': kpi_said, 'kpi_lucro': kpi_lucro,
         'stats_barbeiros': stats_barbeiros, 'total_atendimentos': total_atendimentos,
+        # Enviando dados para os gráficos
         'chart_pgt_labels': json.dumps(['Dinheiro', 'Pix', 'Cartão']),
         'chart_pgt_data': json.dumps([totais_pgt['DINHEIRO'], totais_pgt['PIX'], totais_pgt['CARTAO']]),
         'chart_barb_labels': json.dumps(list(stats_barbeiros.keys())),
