@@ -39,7 +39,9 @@ def home(request):
     if not request.session.get('autenticado'): return redirect('login')
     data_filtro = request.GET.get('data_filtro', date.today().strftime('%Y-%m-%d'))
 
-    # SALVAR (POST)
+    # ==========================================
+    # 1. SALVAR (POST) - Ajustado para tua Planilha
+    # ==========================================
     if request.method == "POST":
         try:
             planilha = conectar_google()
@@ -47,21 +49,44 @@ def home(request):
 
             if tipo_form == 'agendamento':
                 aba = planilha.worksheet("Agendamentos")
+                
+                # Prepara valores
                 v1 = request.POST.get('valor_1', '0').replace(',', '.')
                 v2 = request.POST.get('valor_2', '0').replace(',', '.')
-                pgt = request.POST.get('pagamento')
-                total = (float(v1) + float(v2)) if pgt == 'MISTO' else request.POST.get('valor', '0').replace(',', '.')
+                pgt_principal = request.POST.get('pagamento')
                 
+                total = (float(v1) + float(v2)) if pgt_principal == 'MISTO' else request.POST.get('valor', '0').replace(',', '.')
+                
+                # ORDEM DE GRAVAÇÃO (Baseado na tua imagem + Novos Campos no final)
+                # Col A(0): Data
+                # Col B(1): Horário
+                # Col C(2): Cliente
+                # Col D(3): Serviço
+                # Col E(4): Barbeiro
+                # Col F(5): Pagamento
+                # Col G(6): Valor 1
+                # Col H(7): Valor 2
+                # Col I(8): Valor Total (Aqui acaba a tua imagem atual)
+                # --- NOVAS COLUNAS QUE SERÃO CRIADAS AUTOMATICAMENTE ---
+                # Col J(9): Com Barba?
+                # Col K(10): Tipo Pagamento 1
+                # Col L(11): Tipo Pagamento 2
+
                 aba.append_row([
-                    request.POST.get('data'), 
-                    request.POST.get('horario'), 
-                    request.POST.get('cliente'), 
-                    request.POST.get('servico'), 
-                    request.POST.get('barbeiro'), 
-                    pgt, v1, v2, total, 
-                    "Sim" if request.POST.get('com_barba') == 'on' else "Não"
+                    request.POST.get('data'),       # A
+                    request.POST.get('horario'),    # B
+                    request.POST.get('cliente'),    # C
+                    request.POST.get('servico'),    # D
+                    request.POST.get('barbeiro'),   # E
+                    pgt_principal,                  # F
+                    v1,                             # G
+                    v2,                             # H
+                    total,                          # I
+                    "Sim" if request.POST.get('com_barba') == 'on' else "Não", # J (Novo)
+                    request.POST.get('tipo_pagamento_1', '-'), # K (Novo)
+                    request.POST.get('tipo_pagamento_2', '-')  # L (Novo)
                 ])
-                messages.success(request, "Salvo no Google Sheets!")
+                messages.success(request, "Agendamento salvo com sucesso!")
 
             elif tipo_form == 'venda':
                 aba = planilha.worksheet("Vendas")
@@ -82,10 +107,12 @@ def home(request):
                 ])
                 messages.warning(request, "Saída Salva!")
 
-        except Exception as e: messages.error(request, f"Erro: {e}")
+        except Exception as e: messages.error(request, f"Erro ao salvar: {e}")
         return redirect('home')
 
-    # LER DADOS (GET)
+    # ==========================================
+    # 2. LER (GET) - Corrigido para os Índices da Imagem
+    # ==========================================
     agendamentos = []; vendas = []; saidas = []
     kpi_agend = 0; kpi_vend = 0; kpi_said = 0
     stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
@@ -96,35 +123,64 @@ def home(request):
     try:
         planilha = conectar_google()
         if planilha:
-            # AGENDAMENTOS (Lê tudo e pega o número da linha 'i')
-            # enumerate(..., 1) faz a contagem começar em 1 (linha 1 do Excel)
+            # --- LER AGENDAMENTOS ---
             rows_agend = planilha.worksheet("Agendamentos").get_all_values()
             for i, row in enumerate(rows_agend):
                 if i == 0: continue # Pula cabeçalho
+                
+                # Filtra pela data e garante que a linha tem dados mínimos
                 if len(row) > 0 and row[0] == data_filtro:
                     try:
-                        val = float(str(row[8]).replace(',', '.'))
-                        # row_id = i + 1 (Porque o gspread conta a partir de 1)
+                        # Se a linha for antiga e curta (só até coluna I), preenche o resto com vazio
+                        # Isso evita erro ao tentar ler as colunas novas (Barba/Tipos Pgt)
+                        while len(row) < 12: row.append("")
+
+                        # LEITURA DOS DADOS (Mapeamento Correto)
+                        # row[8] é a Coluna I (Valor Total) na tua imagem
+                        val_str = str(row[8]).replace(',', '.')
+                        val = float(val_str) if val_str else 0.0
+                        
                         item = {
                             'row_id': i + 1, 
-                            'horario': row[1], 'cliente': row[2], 'servico': row[3],
-                            'barbeiro': row[4], 'forma_pagamento': row[5], 'valor_total': val,
-                            'com_barba': row[9] == "Sim" if len(row) > 9 else False
+                            'horario': row[1],   # Coluna B
+                            'cliente': row[2],   # Coluna C
+                            'servico': row[3],   # Coluna D
+                            'barbeiro': row[4],  # Coluna E
+                            'forma_pagamento': row[5], # Coluna F
+                            'valor_total': val,
+                            # Novas colunas (se existirem na linha)
+                            'com_barba': row[9] == "Sim", 
+                            'tipo_pagamento_1': row[10],
+                            'tipo_pagamento_2': row[11]
                         }
                         agendamentos.append(item)
                         kpi_agend += val
                         
-                        # Gráficos
-                        pts = 2 if (item['com_barba'] or item['servico'] == 'COMPLETO') else 1
-                        if item['barbeiro'] in stats_barbeiros: stats_barbeiros[item['barbeiro']] += pts
-                        total_atendimentos += pts
-                        stats_servicos[item['servico']] = stats_servicos.get(item['servico'], 0) + 1
-                        if item['forma_pagamento'] in totais_pgt: totais_pgt[item['forma_pagamento']] += val
-                    except: pass
+                        # --- ESTATÍSTICAS ---
+                        # Contagem Barbeiros
+                        b_nome = item['barbeiro'] if item['barbeiro'] else 'Outros'
+                        if b_nome in stats_barbeiros:
+                            # Se tiver barba OU for completo conta em dobro (lógica exemplo)
+                            pts = 2 if (item['com_barba'] or 'COMPLETO' in item['servico'].upper()) else 1
+                            stats_barbeiros[b_nome] += pts
+                            total_atendimentos += pts
+                        
+                        # Contagem Serviços
+                        s_nome = item['servico']
+                        stats_servicos[s_nome] = stats_servicos.get(s_nome, 0) + 1
+                        
+                        # Contagem Pagamentos
+                        pgt = item['forma_pagamento']
+                        if pgt in totais_pgt: 
+                            totais_pgt[pgt] += val
+
+                    except Exception as e: 
+                        # Printa no console do servidor para ajudar a debugar se der erro
+                        print(f"Erro na linha {i+1}: {e}")
             
             agendamentos.sort(key=lambda x: x['horario'], reverse=True)
 
-            # VENDAS
+            # --- LER VENDAS ---
             rows_vend = planilha.worksheet("Vendas").get_all_values()
             for i, row in enumerate(rows_vend):
                 if i == 0: continue
@@ -135,7 +191,7 @@ def home(request):
                         kpi_vend += val
                     except: pass
 
-            # SAIDAS
+            # --- LER SAÍDAS ---
             rows_said = planilha.worksheet("Saidas").get_all_values()
             for i, row in enumerate(rows_said):
                 if i == 0: continue
@@ -146,7 +202,7 @@ def home(request):
                         kpi_said += val
                     except: pass
 
-    except Exception as e: print(f"Erro leitura: {e}")
+    except Exception as e: print(f"Erro leitura geral: {e}")
 
     kpi_lucro = (kpi_agend + kpi_vend) - kpi_said
 
@@ -165,7 +221,7 @@ def home(request):
     }
     return render(request, 'index.html', context)
 
-# --- FUNÇÕES DE DELETAR (DIRETO NO SHEETS) ---
+# --- DELETAR ---
 def deletar_item(request, tipo, row_id):
     if not request.session.get('autenticado'): return redirect('login')
     try:
@@ -174,8 +230,8 @@ def deletar_item(request, tipo, row_id):
         elif tipo == 'venda': aba = planilha.worksheet("Vendas")
         elif tipo == 'saida': aba = planilha.worksheet("Saidas")
         
-        aba.delete_rows(row_id) # O comando cirúrgico
-        messages.warning(request, "Item apagado da planilha.")
+        aba.delete_rows(row_id)
+        messages.warning(request, "Item apagado com sucesso.")
     except Exception as e:
         messages.error(request, f"Erro ao apagar: {e}")
     return redirect('home')
