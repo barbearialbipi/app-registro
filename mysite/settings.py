@@ -20,7 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-p4u73_1x-!8c4qd*ekg*#nh443k2j9b8@8a53h-9v4np#y+)&6"
+# Tenta pegar a variável do Render. Se não tiver, usa a insegura (local).
+SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-p4u73_1x-!8c4qd*ekg*#nh443k2j9b8@8a53h-9v4np#y+)&6")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -49,6 +50,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'core.middleware.AutoLogoutSemanalMiddleware',
 ]
 
 ROOT_URLCONF = "mysite.urls"
@@ -125,4 +127,6 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'https://localhost:8000',
+    'https://registro-barbearia-lucas-borges.onrender.com',
+    
 ]
