@@ -4,20 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Barbearia Lucas Borges</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00275a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Relatórios BLB">
+    <link rel="apple-touch-icon" href="/static/icons/icon_any_192.png">
+
     <style>
         /* Reset básico */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            min-height: 100vh; /* Garante altura mínima */
+            background-color: #f4f7f6; /* Cinza suave igual ao painel */
+            min-height: 100vh;
             margin: 0;
             display: flex;
-            
-            /* AQUI ESTÁ A MUDANÇA: Alinha no topo e centraliza na horizontal */
-            align-items: flex-start; 
+            align-items: flex-start;
             justify-content: center;
-            
-            /* Espaço do topo para não ficar colado na barra do celular */
             padding-top: 60px; 
             box-sizing: border-box;
         }
@@ -27,32 +31,34 @@
             background-color: white;
             padding: 40px 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* Sombra mais suave */
-            width: 90%; /* Ocupa 90% da largura no celular */
-            max-width: 350px; /* Trava o tamanho máximo no PC */
+            box-shadow: 0 10px 30px rgba(0, 39, 90, 0.15); /* Sombra azulada elegante */
+            width: 90%;
+            max-width: 350px;
             text-align: center;
         }
 
-        /* Estilo da Logo */
+        /* Estilo da Logo com GRADIENTE */
         .logo {
             width: 100px;
             height: 100px;
-            background-color: #2f3863;
+            /* Gradiente da Marca (Azul -> Dourado) */
+            background: linear-gradient(135deg, #00275a, #a77507);
             padding: 15px;
             border-radius: 50%;
-            border: 4px solid #f0f2f5; /* Borda cinza suave para destacar do fundo branco */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 4px solid #f4f7f6;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             margin-bottom: 25px;
             object-fit: contain;
         }
 
         /* Título */
         h2 {
-            color: #2f3863;
+            color: #00275a; /* Azul Profundo */
             margin: 0 0 30px 0;
             font-size: 1.4rem;
-            font-weight: 800;
+            font-weight: 900;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* Mensagem de Erro */
@@ -70,52 +76,53 @@
         /* Campo de Senha */
         input[type="password"] {
             width: 100%;
-            padding: 16px; /* Altura boa para toque */
+            padding: 16px;
             margin-bottom: 20px;
             border: 2px solid #e0e0e0;
             border-radius: 12px;
-            font-size: 16px; /* Evita zoom automático no iPhone */
+            font-size: 16px;
             box-sizing: border-box;
             text-align: center;
             outline: none;
             transition: all 0.3s;
             background-color: #fafafa;
-            color: #333;
+            color: #00275a;
+            font-weight: 600;
         }
 
         input[type="password"]:focus {
-            border-color: #3498db;
+            border-color: #00275a; /* Azul da marca */
             background-color: white;
-            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 39, 90, 0.1);
         }
 
-        /* Botão Entrar */
+        /* Botão Entrar com GRADIENTE */
         button {
             width: 100%;
             padding: 16px;
-            background-color: #2f3863;
+            background: linear-gradient(135deg, #00275a, #a77507);
             color: white;
             border: none;
             border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 800;
             cursor: pointer;
-            transition: transform 0.1s, background-color 0.3s;
-            box-shadow: 0 4px 10px rgba(47, 56, 99, 0.2);
+            transition: transform 0.1s, filter 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 39, 90, 0.3);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         button:active {
             transform: scale(0.98);
-            background-color: #1a254a;
         }
         
         /* Rodapézinho */
         .footer {
             margin-top: 30px;
-            color: #aaa;
+            color: #888;
             font-size: 0.8rem;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -139,5 +146,12 @@
         <div class="footer">Sistema Barbearia Lucas Borges</div>
     </div>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </body>
 </html>
