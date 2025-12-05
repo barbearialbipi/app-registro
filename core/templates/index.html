@@ -8,449 +8,358 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* =========================================
-           1. ESTILOS GERAIS & TIPOGRAFIA
-           ========================================= */
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #f0f2f5; 
-            margin: 0; 
-            padding: 15px; 
-            color: #333; 
-            line-height: 1.5;
-        }
+    /* =========================================
+       CONFIGURAÇÃO DE TEMAS (VARIÁVEIS)
+       ========================================= */
+    :root {
+        /* TEMA CLARO (O teu atual) */
+        --bg-body: #f0f2f5;
+        --bg-card: #ffffff;
+        --text-primary: #333333;
+        --text-secondary: #555555;
+        --text-muted: #777777;
+        --border-color: #e0e0e0;
+        --input-bg: #ffffff;
+        --input-border: #cccccc;
+        --shadow: 0 4px 10px rgba(0,0,0,0.05);
+        --brand-blue: #2f3863;
+        --hover-bg: #e9ecef;
+        --table-stripe: #f9f9f9;
+        --chart-text: #666; /* Cor do texto dos gráficos */
+    }
 
-        /* =========================================
-           2. CABEÇALHO (LOGO E TÍTULO)
-           ========================================= */
-        .header-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            text-align: center;
+    /* TEMA ESCURO (O novo) */
+    [data-theme="dark"] {
+        --bg-body: #111827;       /* Fundo quase preto azulado */
+        --bg-card: #1f2937;       /* Cartões cinza escuro */
+        --text-primary: #f3f4f6;  /* Texto quase branco */
+        --text-secondary: #d1d5db;
+        --text-muted: #9ca3af;
+        --border-color: #374151;  /* Bordas escuras */
+        --input-bg: #374151;      /* Fundo do input */
+        --input-border: #4b5563;
+        --shadow: 0 4px 10px rgba(0,0,0,0.3); /* Sombra mais forte */
+        --brand-blue: #4c5d94;    /* Azul da marca levemente mais claro para contraste */
+        --hover-bg: #374151;
+        --table-stripe: #1a2233;
+        --chart-text: #ccc;       /* Texto dos gráficos claro */
+    }
+
+    /* =========================================
+       1. ESTILOS GERAIS
+       ========================================= */
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+        background-color: var(--bg-body); 
+        margin: 0; 
+        padding: 15px; 
+        color: var(--text-primary); 
+        line-height: 1.5;
+        transition: background-color 0.3s, color 0.3s; /* Transição suave */
+    }
+
+    /* =========================================
+       2. CABEÇALHO & BOTÃO TEMA
+       ========================================= */
+    .header-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        text-align: center;
+        position: relative; /* Para posicionar o botão de tema */
+    }
+    
+    .theme-toggle-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 10px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        box-shadow: var(--shadow);
+        transition: all 0.3s;
+        z-index: 100;
+    }
+    .theme-toggle-btn:hover { transform: scale(1.1); }
+
+    /* Ajuste Header Mobile */
+    @media(max-width: 767px) {
+        .theme-toggle-btn { position: relative; margin-bottom: 15px; right: auto; top: auto; }
+    }
+
+    .header-logo {
+        max-width: 110px;
+        height: auto;
+        margin-bottom: 15px;
+        background-color: #2f3863; /* Mantém a cor original da logo */
+        padding: 15px;
+        border-radius: 50%;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border: 4px solid white;
+    }
+    
+    .header-title {
+        color: var(--text-primary); /* Agora usa variável */
+        font-size: 1.5rem; 
+        margin: 0;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+    }
+
+    @media(min-width: 768px) {
+        .header-container { flex-direction: row; gap: 25px; text-align: left; justify-content: center; }
+        .header-logo { margin-bottom: 0; max-width: 100px; }
+        .header-title { font-size: 2.2rem; text-align: left; }
+        .theme-toggle-btn { position: absolute; right: 20px; top: 20px; }
+    }
+
+    /* =========================================
+       3. FILTRO DE DATA
+       ========================================= */
+    .date-filter-container { text-align: center; margin-bottom: 30px; }
+    .date-filter-form {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--bg-card);
+        padding: 12px 30px;
+        border-radius: 50px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+    }
+    .date-filter-input {
+        border: none;
+        font-weight: bold;
+        color: var(--brand-blue);
+        background: transparent;
+        font-size: 1.1rem;
+        outline: none;
+        font-family: inherit;
+        color-scheme: light dark; /* Calendário nativo se adapta */
+    }
+
+    /* =========================================
+       4. KPIs
+       ========================================= */
+    .kpi-container { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 15px; 
+        margin-bottom: 30px; 
+    }
+    .kpi-box { 
+        padding: 20px; 
+        border-radius: 15px; 
+        color: white; 
+        text-align: center; 
+        box-shadow: var(--shadow); 
+        position: relative;
+        overflow: hidden;
+    }
+    .kpi-box::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(255,255,255,0.1), transparent); pointer-events: none;
+    }
+    .kpi-label { font-size: 0.75rem; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .kpi-value { font-size: 1.5rem; font-weight: 800; }
+    
+    .bg-blue { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .bg-orange { background: linear-gradient(135deg, #f39c12, #d35400); }
+    .bg-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .bg-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+
+    @media(min-width: 768px) {
+        .kpi-container { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .kpi-value { font-size: 2rem; }
+    }
+
+    /* =========================================
+       5. SISTEMA DE ABAS
+       ========================================= */
+    .tab-container { 
+        background: var(--bg-card); 
+        border-radius: 15px; 
+        box-shadow: var(--shadow); 
+        overflow: hidden; 
+        margin-bottom: 40px; 
+    }
+    .tab-header { 
+        display: flex; 
+        background: var(--bg-body); /* Fundo da aba se adapta */
+        border-bottom: 1px solid var(--border-color); 
+        overflow-x: auto; 
+    }
+    .tab-btn { 
+        flex: 1; padding: 18px 10px; border: none; background: none; 
+        cursor: pointer; font-size: 0.85rem; font-weight: 700; 
+        color: var(--text-muted); white-space: nowrap; 
+        transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .tab-btn:hover { background-color: var(--hover-bg); color: var(--text-secondary); }
+    .tab-btn.active { 
+        background: var(--bg-card); 
+        color: var(--brand-blue); 
+        border-bottom: 4px solid var(--brand-blue); 
+    }
+    .tab-content { display: none; padding: 25px; animation: fadeIn 0.4s ease-out; }
+    .tab-content.active { display: block; } 
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    
+    @media(min-width: 900px) {
+        .tab-content.active { display: grid; grid-template-columns: 350px 1fr; gap: 40px; }
+    }
+
+    /* =========================================
+       6. FORMULÁRIOS
+       ========================================= */
+    h3 { 
+        margin-top: 0; color: var(--text-primary); 
+        border-bottom: 2px solid var(--border-color); 
+        padding-bottom: 10px; margin-bottom: 20px; 
+        font-size: 1.3rem; font-weight: 700;
+    }
+    label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 5px; }
+    
+    input, select { 
+        width: 100%; padding: 12px 15px; 
+        border: 1px solid var(--input-border); 
+        border-radius: 8px; box-sizing: border-box; font-size: 16px; 
+        background-color: var(--input-bg); 
+        color: var(--text-primary);
+        transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+    
+    .checkbox-wrapper { 
+        display: flex; align-items: center; 
+        background: var(--bg-body); /* Adapta ao fundo */
+        padding: 15px; border-radius: 8px; margin-top: 15px; 
+        border: 1px solid var(--border-color); cursor: pointer;
+        color: var(--text-primary);
+    }
+    .checkbox-wrapper input { width: 22px; height: 22px; margin: 0 15px 0 0; }
+
+    .btn-save { 
+        width: 100%; margin-top: 25px; padding: 16px; border: none; border-radius: 10px; 
+        color: white; font-weight: 800; cursor: pointer; font-size: 1.1rem; 
+        box-shadow: var(--shadow); text-transform: uppercase; letter-spacing: 1px; 
+        transition: transform 0.1s;
+    }
+    .btn-save:active { transform: scale(0.98); } 
+    .btn-blue { background-color: #3498db; }
+    .btn-orange { background-color: #f39c12; }
+    .btn-red { background-color: #e74c3c; }
+
+    .flex-row { display: flex; gap: 15px; }
+    .flex-col { flex: 1; }
+    .misto-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .misto-row input { flex: 1; } .misto-row select { flex: 1; }
+
+    /* =========================================
+       7. TABELAS
+       ========================================= */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; color: var(--text-primary); }
+    
+    @media(min-width: 768px) {
+        th { text-align: left; padding: 15px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+        td { padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; vertical-align: middle; }
+        tr:hover { background-color: var(--hover-bg); }
+    }
+
+    @media(max-width: 767px) {
+        thead { display: none; }
+        tr { 
+            display: block; margin-bottom: 15px; 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; padding: 15px; box-shadow: var(--shadow);
         }
+        td { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 1rem;
+        }
+        td:last-child { border-bottom: none; }
+        td::before { 
+            content: attr(data-label); font-weight: 700; 
+            color: var(--text-muted); font-size: 0.8rem; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+    }
+    .btn-trash { text-decoration: none; color: #e74c3c; font-size: 1.3rem; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
+    .btn-trash:hover { background-color: rgba(231, 76, 60, 0.1); }
+
+    /* =========================================
+       8. PRODUTIVIDADE
+       ========================================= */
+    .produtividade-box { 
+        margin-top: 20px; background: var(--bg-card); 
+        padding: 25px; border-radius: 15px; 
+        border: 1px solid var(--border-color); 
+        box-shadow: var(--shadow); 
+        color: var(--text-primary);
+    }
+    .prod-title { 
+        font-weight: 800; color: var(--brand-blue); 
+        margin-bottom: 20px; font-size: 1.2rem; 
+        border-bottom: 2px solid var(--border-color); 
+        padding-bottom: 10px; text-transform: uppercase;
+    }
+    .prod-item { 
+        display: flex; justify-content: space-between; 
+        padding: 12px 0; border-bottom: 1px solid var(--border-color); 
+        font-size: 1.05rem; color: var(--text-secondary);
+    }
+    .prod-item strong { color: var(--text-primary); }
+    .prod-total { 
+        display: flex; justify-content: space-between; padding: 20px 0 0; 
+        font-weight: 800; font-size: 1.3rem; color: var(--text-primary); 
+        border-top: 2px solid var(--border-color); margin-top: 10px; 
+    }
+
+    /* =========================================
+       9. GRÁFICOS
+       ========================================= */
+    .charts-row { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 40px; }
+    .chart-wrapper { 
+        background: var(--bg-card); 
+        padding: 20px; border-radius: 15px; 
+        height: 250px; box-shadow: var(--shadow); 
+        border: 1px solid var(--border-color); /* Adicionei borda para o tema escuro */
+    }
+    @media(min-width: 900px) { .charts-row { grid-template-columns: repeat(3, 1fr); } }
+
+    /* =========================================
+       10. EXPANDER
+       ========================================= */
+    .expander-btn {
+        width: 100%; background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 20px; text-align: left; font-size: 1.1rem;
+        font-weight: 700; cursor: pointer; border-radius: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+        color: var(--text-primary); box-shadow: var(--shadow);
+        margin-top: 40px; margin-bottom: 10px; transition: background 0.2s;
+    }
+    .expander-btn:hover { background-color: var(--hover-bg); }
+    .expander-content { display: none; overflow: hidden; animation: slideDown 0.3s ease-out; }
+    .expander-content.open { display: block; }
+    .arrow-icon { transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted); }
+    .expander-btn.active .arrow-icon { transform: rotate(180deg); }
         
-        /* Logo com fundo azul institucional e borda branca */
-        .header-logo {
-            max-width: 110px;
-            height: auto;
-            margin-bottom: 15px;
-            background-color: #2f3863; /* Azul da Barbearia */
-            padding: 15px;
-            border-radius: 50%;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            border: 4px solid white;
-        }
-        
-        .header-title {
-            color: #2c3e50;
-            font-size: 1.5rem; /* Tamanho otimizado para mobile */
-            margin: 0;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-        }
-
-        /* Ajustes para telas maiores (Computador) */
-        @media(min-width: 768px) {
-            .header-container { flex-direction: row; gap: 25px; text-align: left; }
-            .header-logo { margin-bottom: 0; max-width: 100px; }
-            .header-title { font-size: 2.2rem; text-align: left; }
-        }
-
-        /* =========================================
-           3. FILTRO DE DATA
-           ========================================= */
-        .date-filter-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .date-filter-form {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: white;
-            padding: 12px 30px;
-            border-radius: 50px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border: 1px solid #eee;
-        }
-        .date-filter-input {
-            border: none;
-            font-weight: bold;
-            color: #2f3863;
-            background: transparent;
-            font-size: 1.1rem;
-            outline: none;
-            font-family: inherit;
-        }
-
-        /* =========================================
-           4. KPIs (CARTÕES DE RESUMO)
-           ========================================= */
-        .kpi-container { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; /* Mobile: 2 colunas */
-            gap: 15px; 
-            margin-bottom: 30px; 
-        }
-        .kpi-box { 
-            padding: 20px; 
-            border-radius: 15px; 
-            color: white; 
-            text-align: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            position: relative;
-            overflow: hidden;
-        }
-        /* Efeito de brilho suave nos cartões */
-        .kpi-box::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(rgba(255,255,255,0.1), transparent);
-            pointer-events: none;
-        }
-        .kpi-label { 
-            font-size: 0.75rem; 
-            opacity: 0.9; 
-            margin-bottom: 5px; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            font-weight: 600;
-        }
-        .kpi-value { 
-            font-size: 1.5rem; 
-            font-weight: 800; 
-        }
-        
-        /* Cores dos KPIs */
-        .bg-blue { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .bg-orange { background: linear-gradient(135deg, #f39c12, #d35400); }
-        .bg-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .bg-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-
-        /* PC: 4 colunas */
-        @media(min-width: 768px) {
-            .kpi-container { grid-template-columns: repeat(4, 1fr); gap: 20px; }
-            .kpi-value { font-size: 2rem; }
-        }
-
-        /* =========================================
-           5. SISTEMA DE ABAS (NAVEGAÇÃO)
-           ========================================= */
-        .tab-container { 
-            background: white; 
-            border-radius: 15px; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05); 
-            overflow: hidden; 
-            margin-bottom: 40px; /* Espaço para separar dos gráficos */
-        }
-        
-        .tab-header { 
-            display: flex; 
-            background: #f8f9fa; 
-            border-bottom: 1px solid #e0e0e0; 
-            overflow-x: auto; /* Scroll horizontal em telas muito pequenas */
-        }
-        .tab-btn { 
-            flex: 1; 
-            padding: 18px 10px; 
-            border: none; 
-            background: none; 
-            cursor: pointer; 
-            font-size: 1rem; 
-            font-weight: 700; 
-            color: #777; 
-            white-space: nowrap; 
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-        }
-        .tab-btn:hover { background-color: #e9ecef; color: #555; }
-        .tab-btn.active { 
-            background: white; 
-            color: #2f3863; 
-            border-bottom: 4px solid #2f3863; /* Indicador ativo */
-        }
-
-        .tab-content { 
-            display: none; 
-            padding: 25px; 
-            animation: fadeIn 0.4s ease-out; 
-        }
-        .tab-content.active { display: block; } 
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* PC: Layout Grid lado a lado (Esquerda Form / Direita Lista) */
-        @media(min-width: 900px) {
-            .tab-content.active { display: grid; grid-template-columns: 350px 1fr; gap: 40px; }
-        }
-
-        /* =========================================
-           6. FORMULÁRIOS (Mobile Friendly)
-           ========================================= */
-        h3 { 
-            margin-top: 0; 
-            color: #2c3e50; 
-            border-bottom: 2px solid #eee; 
-            padding-bottom: 10px; 
-            margin-bottom: 20px; 
-            font-size: 1.3rem; 
-            font-weight: 700;
-        }
-        
-        label { 
-            display: block; 
-            margin-top: 15px; 
-            font-weight: 600; 
-            font-size: 0.95rem; 
-            color: #555; 
-            margin-bottom: 5px;
-        }
-        
-        /* Inputs grandes (16px) para facilitar o toque e evitar zoom */
-        input, select { 
-            width: 100%; 
-            padding: 12px 15px; 
-            border: 1px solid #ccc; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            background-color: #fff;
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
-        
-        /* Checkbox grande */
-        .checkbox-wrapper { 
-            display: flex; 
-            align-items: center; 
-            background: #f8f9fa; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-top: 15px; 
-            border: 1px solid #e9ecef; 
-            cursor: pointer;
-        }
-        .checkbox-wrapper:active { background-color: #eee; }
-        .checkbox-wrapper input { width: 22px; height: 22px; margin: 0 15px 0 0; }
-
-        /* Botões de Ação */
-        .btn-save { 
-            width: 100%; 
-            margin-top: 25px; 
-            padding: 16px; 
-            border: none; 
-            border-radius: 10px; 
-            color: white; 
-            font-weight: 800; 
-            cursor: pointer; 
-            font-size: 1.1rem; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: transform 0.1s;
-        }
-        .btn-save:active { transform: scale(0.98); } 
-        
-        .btn-blue { background-color: #3498db; }
-        .btn-orange { background-color: #f39c12; }
-        .btn-red { background-color: #e74c3c; }
-
-        /* Helpers de Layout */
-        .flex-row { display: flex; gap: 15px; }
-        .flex-col { flex: 1; }
-
-        /* Estilo Pagamento Misto */
-        .misto-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .misto-row input { flex: 1; }
-        .misto-row select { flex: 1; }
-
-        /* =========================================
-           7. TABELAS RESPONSIVAS (CARD VIEW)
-           ========================================= */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        
-        /* Estilo para PC */
-        @media(min-width: 768px) {
-            th { text-align: left; padding: 15px; border-bottom: 2px solid #eee; color: #7f8c8d; font-size: 0.9rem; }
-            td { padding: 15px; border-bottom: 1px solid #eee; font-size: 0.95rem; vertical-align: middle; }
-            tr:last-child td { border-bottom: none; }
-            tr:hover { background-color: #f9f9f9; }
-        }
-
-        /* Estilo para CELULAR (Cards) */
-        @media(max-width: 767px) {
-            thead { display: none; } /* Esconde o cabeçalho clássico */
-            
-            tr { 
-                display: block; 
-                margin-bottom: 15px; 
-                background: white; 
-                border: 1px solid #e0e0e0; 
-                border-radius: 12px; 
-                padding: 15px;
-                box-shadow: 0 3px 6px rgba(0,0,0,0.05);
-            }
-            
-            td { 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                padding: 10px 0; 
-                border-bottom: 1px solid #f0f0f0; 
-                font-size: 1rem;
-            }
-            td:last-child { border-bottom: none; padding-bottom: 0; }
-            td:first-child { padding-top: 0; }
-            
-            /* Rótulo da coluna via CSS */
-            td::before { 
-                content: attr(data-label); 
-                font-weight: 700; 
-                color: #888; 
-                font-size: 0.8rem;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-        }
-
-        .btn-trash { 
-            text-decoration: none; 
-            color: #e74c3c; 
-            font-size: 1.3rem; 
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: background 0.2s;
-        }
-        .btn-trash:hover { background-color: #ffebee; }
-
-        /* =========================================
-           8. CAIXA DE PRODUTIVIDADE
-           ========================================= */
-        .produtividade-box { 
-            margin-top: 40px; 
-            background: #fff; 
-            padding: 25px; 
-            border-radius: 15px; 
-            border: 1px solid #e9ecef; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-        }
-        .prod-title { 
-            font-weight: 800; 
-            color: #2f3863; 
-            margin-bottom: 20px; 
-            font-size: 1.2rem; 
-            border-bottom: 2px solid #eee; 
-            padding-bottom: 10px; 
-            text-transform: uppercase;
-        }
-        .prod-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 12px 0; 
-            border-bottom: 1px solid #f5f5f5; 
-            font-size: 1.05rem;
-            color: #555;
-        }
-        .prod-item strong { color: #333; }
-        
-        .prod-total { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 20px 0 0; 
-            font-weight: 800; 
-            font-size: 1.3rem; 
-            color: #2c3e50; 
-            border-top: 2px solid #ddd; 
-            margin-top: 10px; 
-        }
-
-        /* =========================================
-           9. GRÁFICOS (ÁREA DE ANÁLISE)
-           ========================================= */
-        .charts-row { 
-            display: grid; 
-            grid-template-columns: 1fr; /* Mobile: 1 por linha */
-            gap: 25px; 
-            margin-bottom: 40px; 
-        }
-        .chart-wrapper { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 15px; 
-            height: 250px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-        }
-
-        /* PC: 3 por linha */
-        @media(min-width: 900px) {
-            .charts-row { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        /* =========================================
-           10. ESTILOS DO EXPANDER (TIPO STREAMLIT)
-           ========================================= */
-        .expander-btn {
-            width: 100%;
-            background-color: white;
-            border: 1px solid #ddd;
-            padding: 20px;
-            text-align: left;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #2c3e50;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            margin-top: 40px;
-            margin-bottom: 10px;
-            transition: background 0.2s;
-        }
-        
-        .expander-btn:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .expander-content {
-            display: none; /* Começa escondido */
-            overflow: hidden;
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        .expander-content.open {
-            display: block; /* Aparece quando ativo */
-        }
-        
-        .arrow-icon {
-            transition: transform 0.3s ease;
-            font-size: 0.8rem;
-            color: #777;
-        }
-        
-        .expander-btn.active .arrow-icon {
-            transform: rotate(180deg);
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-    </style>
+</style>
 </head>
 <body>
 
     <div class="header-container">
+        <button class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
         <img src="https://i.imgur.com/zJTASJk.png" alt="Barbearia Lucas Borges" class="header-logo">
         <h1 class="header-title">Relatório Diário<br>Barbearia Lucas Borges</h1>
     </div>
@@ -891,6 +800,51 @@
             
             // Gira a setinha do botão
             btn.classList.toggle("active");
+        }
+        // 1. Verifica se já tem tema salvo ao carregar a página
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            const btn = document.querySelector('.theme-toggle-btn');
+            if(btn) btn.innerText = '☀️'; // Muda o ícone para Sol
+            
+            // Espera meio segundo para garantir que o Chart.js carregou
+            setTimeout(() => updateChartColors('dark'), 500);
+        }
+
+        // 2. Função acionada pelo botão
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.querySelector('.theme-toggle-btn');
+            
+            if (html.getAttribute('data-theme') === 'dark') {
+                // Voltar para Claro
+                html.removeAttribute('data-theme');
+                btn.innerText = '🌙';
+                localStorage.setItem('theme', 'light');
+                updateChartColors('light');
+            } else {
+                // Mudar para Escuro
+                html.setAttribute('data-theme', 'dark');
+                btn.innerText = '☀️';
+                localStorage.setItem('theme', 'dark');
+                updateChartColors('dark');
+            }
+        }
+
+        // 3. Atualiza as cores dos gráficos
+        function updateChartColors(theme) {
+            const textColor = theme === 'dark' ? '#cccccc' : '#666666';
+            const gridColor = theme === 'dark' ? '#444444' : '#dddddd';
+            
+            if (window.Chart) {
+                // Atualiza padrões globais
+                Chart.defaults.color = textColor;
+                Chart.defaults.borderColor = gridColor;
+                
+                // Força atualização de cada gráfico
+                Chart.instances.forEach(chart => chart.update());
+            }
         }
     </script>
 
