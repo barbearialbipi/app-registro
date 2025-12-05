@@ -1,0 +1,35 @@
+{
+  "name": "Relatorios Barbearia Lucas Borges",
+  "short_name": " Relatórios BLB",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#2f3863",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icons/icon_any_192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon_maskable_192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/icon_any_512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon_maskable_512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
+}
