@@ -924,21 +924,48 @@
             }
         }
 
-        // 3. Atualiza as cores dos gráficos
+        // 3. Atualiza as cores dos gráficos (Versão Turbinada)
         function updateChartColors(theme) {
-            // MUDANÇA AQUI: Troquei '#cccccc' (cinza) por '#f0f8ff' (Branco Gelo)
-            const textColor = theme === 'dark' ? '#f0f8ff' : '#666666';
-            
-            // Também clareei um pouco as linhas da grade para destacar mais
-            const gridColor = theme === 'dark' ? '#444444' : '#dddddd';
-            
+            // Definição das cores: Branco Gelo para escuro, Cinza Escuro para claro
+            const textColor = theme === 'dark' ? '#f0f8ff' : '#333333';
+            const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
             if (window.Chart) {
-                // Atualiza padrões globais
+                // 1. Atualiza padrões globais para gráficos futuros
                 Chart.defaults.color = textColor;
                 Chart.defaults.borderColor = gridColor;
                 
-                // Força atualização de cada gráfico
-                Chart.instances.forEach(chart => chart.update());
+                // 2. FORÇA a atualização nos gráficos que já estão na tela
+                // Usamos Object.values para garantir que pegamos todos
+                Object.values(Chart.instances).forEach(chart => {
+                    
+                    // Atualiza Legendas (ex: "Dinheiro", "Pix")
+                    if (chart.options.plugins && chart.options.plugins.legend) {
+                        chart.options.plugins.legend.labels.color = textColor;
+                    }
+                    
+                    // Atualiza Títulos (ex: "Serviços Realizados")
+                    if (chart.options.plugins && chart.options.plugins.title) {
+                        chart.options.plugins.title.color = textColor;
+                    }
+
+                    // Atualiza EIXOS X e Y (As letras teimosas)
+                    if (chart.options.scales) {
+                        // Eixo X (Horizontal - Nomes dos cortes/barbeiros)
+                        if (chart.options.scales.x) {
+                            chart.options.scales.x.ticks.color = textColor;
+                            chart.options.scales.x.grid.color = gridColor;
+                        }
+                        // Eixo Y (Vertical - Números/Valores)
+                        if (chart.options.scales.y) {
+                            chart.options.scales.y.ticks.color = textColor;
+                            chart.options.scales.y.grid.color = gridColor;
+                        }
+                    }
+
+                    // Manda redesenhar com as novas cores
+                    chart.update();
+                });
             }
         }
         
