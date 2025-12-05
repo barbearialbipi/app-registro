@@ -939,77 +939,69 @@
             // Gira a setinha do botão
             btn.classList.toggle("active");
         }
-        // 1. Verifica se já tem tema salvo ao carregar a página
+        // ==========================================
+        //  6. TEMA ESCURO E CORREÇÃO DE CORES (ATUALIZADO)
+        // ==========================================
+        
+        // Verifica tema salvo ao carregar
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
             const btn = document.querySelector('.theme-toggle-btn');
-            if(btn) btn.innerText = '☀️'; // Muda o ícone para Sol
+            if(btn) btn.innerText = '☀️'; 
             
-            // Espera meio segundo para garantir que o Chart.js carregou
+            // Define barra Azul no modo escuro ao carregar
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#00275a');
+            
             setTimeout(() => updateChartColors('dark'), 500);
+        } else {
+            // Se for modo claro, garante que começa Dourado
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#a77507');
         }
 
-        // 2. Função acionada pelo botão
+        // Botão de Trocar Tema
         function toggleTheme() {
             const html = document.documentElement;
             const btn = document.querySelector('.theme-toggle-btn');
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
             
             if (html.getAttribute('data-theme') === 'dark') {
-                // Voltar para Claro
-                html.removeAttribute('data-theme');
+                // --- MUDAR PARA CLARO ---
+                html.removeAttribute('data-theme'); 
                 btn.innerText = '🌙';
                 localStorage.setItem('theme', 'light');
+                
+                // Muda a barra para DOURADO
+                metaThemeColor.setAttribute('content', '#a77507');
+                
                 updateChartColors('light');
             } else {
-                // Mudar para Escuro
-                html.setAttribute('data-theme', 'dark');
+                // --- MUDAR PARA ESCURO ---
+                html.setAttribute('data-theme', 'dark'); 
                 btn.innerText = '☀️';
                 localStorage.setItem('theme', 'dark');
+                
+                // Muda a barra para AZUL PROFUNDO
+                metaThemeColor.setAttribute('content', '#00275a');
+                
                 updateChartColors('dark');
             }
         }
 
-        // 3. Atualiza as cores dos gráficos (Versão Turbinada)
+        // Função "Turbinada" para atualizar cores dos gráficos
         function updateChartColors(theme) {
-            // Definição das cores: Branco Gelo para escuro, Cinza Escuro para claro
-            const textColor = theme === 'dark' ? '#f0f8ff' : '#333333';
+            const textColor = theme === 'dark' ? '#f0f8ff' : '#00275a'; // Azul no claro, Branco no escuro
             const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
             if (window.Chart) {
-                // 1. Atualiza padrões globais para gráficos futuros
                 Chart.defaults.color = textColor;
                 Chart.defaults.borderColor = gridColor;
                 
-                // 2. FORÇA a atualização nos gráficos que já estão na tela
-                // Usamos Object.values para garantir que pegamos todos
                 Object.values(Chart.instances).forEach(chart => {
-                    
-                    // Atualiza Legendas (ex: "Dinheiro", "Pix")
-                    if (chart.options.plugins && chart.options.plugins.legend) {
-                        chart.options.plugins.legend.labels.color = textColor;
-                    }
-                    
-                    // Atualiza Títulos (ex: "Serviços Realizados")
-                    if (chart.options.plugins && chart.options.plugins.title) {
-                        chart.options.plugins.title.color = textColor;
-                    }
-
-                    // Atualiza EIXOS X e Y (As letras teimosas)
-                    if (chart.options.scales) {
-                        // Eixo X (Horizontal - Nomes dos cortes/barbeiros)
-                        if (chart.options.scales.x) {
-                            chart.options.scales.x.ticks.color = textColor;
-                            chart.options.scales.x.grid.color = gridColor;
-                        }
-                        // Eixo Y (Vertical - Números/Valores)
-                        if (chart.options.scales.y) {
-                            chart.options.scales.y.ticks.color = textColor;
-                            chart.options.scales.y.grid.color = gridColor;
-                        }
-                    }
-
-                    // Manda redesenhar com as novas cores
+                    if (chart.options.plugins?.legend) chart.options.plugins.legend.labels.color = textColor;
+                    if (chart.options.plugins?.title) chart.options.plugins.title.color = textColor;
+                    if (chart.options.scales?.x) { chart.options.scales.x.ticks.color = textColor; chart.options.scales.x.grid.color = gridColor; }
+                    if (chart.options.scales?.y) { chart.options.scales.y.ticks.color = textColor; chart.options.scales.y.grid.color = gridColor; }
                     chart.update();
                 });
             }
