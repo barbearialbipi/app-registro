@@ -280,8 +280,30 @@
 
     .flex-row { display: flex; gap: 15px; }
     .flex-col { flex: 1; }
-    .misto-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-    .misto-row input { flex: 1; } .misto-row select { flex: 1; }
+    /* =========================================
+       CORREÇÃO DO PAGAMENTO MISTO
+       ========================================= */
+    .misto-row { 
+        display: flex; 
+        gap: 15px; 
+        margin-bottom: 15px; 
+        align-items: center; 
+    }
+
+    /* O Input de Valor (Dinheiro) */
+    .misto-row input { 
+        flex: 1;        /* Manda ocupar metade do espaço */
+        width: 100%;    /* Garante que preenche o flex */
+        min-width: 0;   /* Evita que o navegador trave o tamanho */
+        margin-bottom: 0; /* Remove margem de baixo para alinhar */
+    }
+
+    /* O Select (Menu) */
+    .misto-row .custom-select-container { 
+        flex: 1;        /* Manda ocupar a outra metade */
+        width: 100%; 
+        margin-bottom: 0; /* Remove margem extra do componente */
+    }
 
     /* =========================================
        7. TABELAS
