@@ -136,14 +136,20 @@
         border: 1px solid var(--border-color);
     }
     .date-filter-input {
-        border: none;
-        font-weight: bold;
-        color: var(--brand-blue);
-        background: transparent;
-        font-size: 1.1rem;
+        border: none; 
+        font-weight: bold; 
+        color: var(--brand-blue); /* Cor Azul no Modo Claro (Padrão) */
+        background: transparent; 
+        font-size: 1.1rem; 
         outline: none;
-        font-family: inherit;
-        color-scheme: light dark; /* Calendário nativo se adapta */
+        font-family: inherit; 
+        color-scheme: light dark;
+        cursor: pointer;
+    }
+
+    /* NOVA REGRA MÁGICA: Data Branca no Modo Escuro */
+    [data-theme="dark"] .date-filter-input {
+        color: #f0f8ff !important; /* Branco Gelo */
     }
 
     /* =========================================
@@ -920,7 +926,10 @@
 
         // 3. Atualiza as cores dos gráficos
         function updateChartColors(theme) {
-            const textColor = theme === 'dark' ? '#cccccc' : '#666666';
+            // MUDANÇA AQUI: Troquei '#cccccc' (cinza) por '#f0f8ff' (Branco Gelo)
+            const textColor = theme === 'dark' ? '#f0f8ff' : '#666666';
+            
+            // Também clareei um pouco as linhas da grade para destacar mais
             const gridColor = theme === 'dark' ? '#444444' : '#dddddd';
             
             if (window.Chart) {
@@ -932,7 +941,7 @@
                 Chart.instances.forEach(chart => chart.update());
             }
         }
-
+        
         // ==========================================
         //  SELECT PERSONALIZADO (Criação Automática)
         // ==========================================
