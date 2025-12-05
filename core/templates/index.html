@@ -353,6 +353,92 @@
     .expander-content.open { display: block; }
     .arrow-icon { transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted); }
     .expander-btn.active .arrow-icon { transform: rotate(180deg); }
+
+    /* =========================================
+       11. SELECT PERSONALIZADO (Bonito no Mobile)
+       ========================================= */
+    
+    /* Esconde o select nativo original */
+    select {
+        display: none !important;
+    }
+
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+        margin-bottom: 15px; /* Espaço igual aos inputs */
+    }
+
+    /* A caixa que parece o input (fechada) */
+    .select-selected {
+        background-color: var(--input-bg);
+        color: var(--text-primary);
+        padding: 12px 15px;
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s;
+    }
+
+    /* Seta customizada */
+    .select-selected:after {
+        content: "";
+        width: 0; height: 0;
+        border: 6px solid transparent;
+        border-color: var(--text-muted) transparent transparent transparent;
+        margin-top: 5px;
+    }
+    
+    /* Quando está aberto, a seta vira */
+    .select-selected.select-arrow-active:after {
+        border-color: transparent transparent var(--text-muted) transparent;
+        margin-top: -7px;
+    }
+
+    /* A lista de opções (aberta) */
+    .select-items {
+        position: absolute;
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        max-height: 250px; /* Scroll se for muito grande */
+        overflow-y: auto;
+        margin-top: 5px;
+    }
+
+    /* Esconder a lista */
+    .select-hide {
+        display: none;
+    }
+
+    /* Cada opção da lista */
+    .select-items div {
+        padding: 12px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s;
+    }
+
+    .select-items div:last-child {
+        border-bottom: none;
+    }
+
+    .select-items div:hover, .same-as-selected {
+        background-color: var(--hover-bg);
+        color: var(--brand-blue);
+        font-weight: 700;
+    }
         
 </style>
 </head>
@@ -846,6 +932,119 @@
                 Chart.instances.forEach(chart => chart.update());
             }
         }
+
+        // ==========================================
+        //  SELECT PERSONALIZADO (Criação Automática)
+        // ==========================================
+        
+        function setupCustomSelects() {
+            var x, i, j, l, ll, selElmnt, a, b, c;
+            /* Procura qualquer elemento com a tag "select" */
+            x = document.getElementsByTagName("select");
+            l = x.length;
+            
+            for (i = 0; i < l; i++) {
+                selElmnt = x[i];
+                
+                // Evita duplicar se já tiver criado (caso a página recarregue partes)
+                if (selElmnt.parentNode.classList.contains("custom-select-container")) continue;
+
+                /* 1. Cria o container (wrapper) */
+                var wrapper = document.createElement("DIV");
+                wrapper.setAttribute("class", "custom-select-container");
+                selElmnt.parentNode.insertBefore(wrapper, selElmnt);
+                wrapper.appendChild(selElmnt);
+
+                /* 2. Cria a DIV que age como o item selecionado (o que vê fechado) */
+                a = document.createElement("DIV");
+                a.setAttribute("class", "select-selected");
+                // Pega o texto da opção selecionada atualmente
+                a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+                wrapper.appendChild(a);
+
+                /* 3. Cria a lista de opções (escondida) */
+                b = document.createElement("DIV");
+                b.setAttribute("class", "select-items select-hide");
+
+                ll = selElmnt.length;
+                /* Loop por todas as opções do select original */
+                for (j = 0; j < ll; j++) {
+                    /* Cria uma DIV para cada opção */
+                    c = document.createElement("DIV");
+                    c.innerHTML = selElmnt.options[j].innerHTML;
+                    
+                    // Adiciona evento de clique na opção
+                    c.addEventListener("click", function(e) {
+                        var y, i, k, s, h, sl, yl;
+                        s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+                        sl = s.length;
+                        h = this.parentNode.previousSibling;
+                        
+                        for (i = 0; i < sl; i++) {
+                            if (s.options[i].innerHTML == this.innerHTML) {
+                                // Atualiza o select original (oculto)
+                                s.selectedIndex = i;
+                                h.innerHTML = this.innerHTML;
+                                
+                                // Dispara evento de 'change' para o JS do Misto funcionar
+                                var event = new Event('change');
+                                s.dispatchEvent(event);
+
+                                // Atualiza estilos visuais
+                                y = this.parentNode.getElementsByClassName("same-as-selected");
+                                yl = y.length;
+                                for (k = 0; k < yl; k++) {
+                                    y[k].removeAttribute("class");
+                                }
+                                this.setAttribute("class", "same-as-selected");
+                                break;
+                            }
+                        }
+                        h.click();
+                    });
+                    b.appendChild(c);
+                }
+                wrapper.appendChild(b);
+
+                /* 4. Evento para abrir/fechar ao clicar na caixa */
+                a.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    closeAllSelect(this);
+                    this.nextSibling.classList.toggle("select-hide");
+                    this.classList.toggle("select-arrow-active");
+                });
+            }
+        }
+
+        /* Função para fechar todos os selects se clicar fora */
+        function closeAllSelect(elmnt) {
+            var x, y, i, xl, yl, arrNo = [];
+            x = document.getElementsByClassName("select-items");
+            y = document.getElementsByClassName("select-selected");
+            xl = x.length;
+            yl = y.length;
+            for (i = 0; i < yl; i++) {
+                if (elmnt == y[i]) {
+                    arrNo.push(i)
+                } else {
+                    y[i].classList.remove("select-arrow-active");
+                }
+            }
+            for (i = 0; i < xl; i++) {
+                if (arrNo.indexOf(i)) {
+                    x[i].classList.add("select-hide");
+                }
+            }
+        }
+
+        /* Fecha se clicar em qualquer lugar da tela */
+        document.addEventListener("click", closeAllSelect);
+
+        // --- INICIALIZAR ---
+        // Chama a função assim que a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCustomSelects();
+        });
     </script>
 
 </body>
