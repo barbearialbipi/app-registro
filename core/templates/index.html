@@ -20,37 +20,37 @@
        CONFIGURAÇÃO DE TEMAS (VARIÁVEIS)
        ========================================= */
     :root {
-        /* TEMA CLARO (O teu atual) */
-        --bg-body: #f0f2f5;
+        /* --- CORES PREMIUM --- */
+        --brand-blue: #00275a;    /* Azul Profundo */
+        --brand-gold: #a77507;    /* Dourado/Bronze */
+        --brand-gradient: linear-gradient(135deg, #00275a, #a77507);
+
+        /* TEMA CLARO */
+        --bg-body: #f4f7f6;
         --bg-card: #ffffff;
-        --text-primary: #333333;
+        --text-primary: #00275a;  /* Texto agora é Azul */
         --text-secondary: #555555;
-        --text-muted: #777777;
+        --text-muted: #888888;
         --border-color: #e0e0e0;
         --input-bg: #ffffff;
         --input-border: #cccccc;
-        --shadow: 0 4px 10px rgba(0,0,0,0.05);
-        --brand-blue: #2f3863;
-        --hover-bg: #e9ecef;
-        --table-stripe: #f9f9f9;
-        --chart-text: #666; /* Cor do texto dos gráficos */
+        --shadow: 0 8px 20px rgba(0, 39, 90, 0.1);
+        --hover-bg: #f0f2f5;
     }
 
-    /* TEMA ESCURO (O novo) */
+    /* TEMA ESCURO (LUXO) */
     [data-theme="dark"] {
-        --bg-body: #111827;       /* Fundo quase preto azulado */
-        --bg-card: #1f2937;       /* Cartões cinza escuro */
-        --text-primary: #f3f4f6;  /* Texto quase branco */
-        --text-secondary: #d1d5db;
-        --text-muted: #9ca3af;
-        --border-color: #374151;  /* Bordas escuras */
-        --input-bg: #374151;      /* Fundo do input */
-        --input-border: #4b5563;
-        --shadow: 0 4px 10px rgba(0,0,0,0.3); /* Sombra mais forte */
-        --brand-blue: #4c5d94;    /* Azul da marca levemente mais claro para contraste */
-        --hover-bg: #374151;
-        --table-stripe: #1a2233;
-        --chart-text: #ccc;       /* Texto dos gráficos claro */
+        --bg-body: #00122b;       /* Azul Noite */
+        --bg-card: #001a3d;
+        --text-primary: #f0f8ff;
+        --text-secondary: #c0cce0;
+        --text-muted: #8a9ab8;
+        --border-color: #0d2b52;
+        --input-bg: #0d2b52;
+        --input-border: #1c4b82;
+        --shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        --brand-blue: #4c8dff;    /* Azul mais claro para leitura no escuro */
+        --hover-bg: #0d2b52;
     }
 
     /* =========================================
@@ -105,7 +105,7 @@
         max-width: 110px;
         height: auto;
         margin-bottom: 15px;
-        background-color: #2f3863; /* Mantém a cor original da logo */
+        background-color: var(--brand-gradient);
         padding: 15px;
         border-radius: 50%;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -146,7 +146,7 @@
     .date-filter-input {
         border: none; 
         font-weight: bold; 
-        color: var(--brand-blue); /* Cor Azul no Modo Claro (Padrão) */
+        color: var(--brand-gold); /* Cor Azul no Modo Claro (Padrão) */
         background: transparent; 
         font-size: 1.1rem; 
         outline: none;
@@ -268,8 +268,8 @@
         transition: transform 0.1s;
     }
     .btn-save:active { transform: scale(0.98); } 
-    .btn-blue { background-color: #3498db; }
-    .btn-orange { background-color: #f39c12; }
+    .btn-blue { background-color: var(--brand-gradient); }
+    .btn-orange { background-color: var(--brand-gold); }
     .btn-red { background-color: #e74c3c; }
 
     .flex-row { display: flex; gap: 15px; }
