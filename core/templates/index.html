@@ -891,8 +891,12 @@
         }
 
         // --- Função para mostrar campos de Pagamento Misto ---
+        // 2. MISTO
         function toggleMisto() {
-            var m = document.getElementById("pagamentoSelect").value === 'MISTO';
+            // AQUI ESTÁ A MUDANÇA: Mudei 'MISTO' para 'Misto' para bater com seu novo HTML
+            var select = document.getElementById("pagamentoSelect");
+            var m = select.value === 'Misto'; 
+            
             document.getElementById("valorNormal").style.display = m ? 'none' : 'block';
             document.getElementById("valorMisto").style.display = m ? 'block' : 'none';
         }
