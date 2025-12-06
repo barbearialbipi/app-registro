@@ -51,71 +51,60 @@ def home(request):
             if tipo_form == 'agendamento':
                 aba = planilha.worksheet("Agendamentos")
                 
-                # --- DADOS BÁSICOS ---
+                # Dados Básicos
                 data = request.POST.get('data')
                 horario = request.POST.get('horario')
-                cliente = request.POST.get('cliente').title() # Deixa nome bonito (Ex: João Silva)
-                
-                # CORREÇÃO 1: Nome do Barbeiro sem .upper()
-                barbeiro = request.POST.get('barbeiro') 
+                cliente = request.POST.get('cliente').title()
+                barbeiro = request.POST.get('barbeiro') # Nome correto (Ex: Lucas Borges)
                 
                 servico = request.POST.get('servico')
-                com_barba = request.POST.get('com_barba')
-                
-                # Adiciona "+ Barba" se necessário
-                if com_barba == 'on':
+                if request.POST.get('com_barba') == 'on':
                     servico += " + Barba"
 
-                # --- LÓGICA DO PAGAMENTO (CORREÇÃO DAS COLUNAS) ---
-                pgt_form = request.POST.get('pagamento') # Vem "Misto", "Pix", etc.
+                # --- LÓGICA DO PAGAMENTO (NOVA E SIMPLIFICADA) ---
+                pgt_raw = request.POST.get('pagamento') # "Misto" ou "Pix"...
                 
-                # Variáveis padrão (vazias) para não bagunçar a planilha
+                # Variáveis padrão (para limpar a planilha se não for misto)
                 v1 = "-"
-                t1 = "-"
                 v2 = "-"
-                t2 = "-"
-                valor_total = "0"
+                valor_total = 0.0
+                texto_final_coluna_F = ""
 
-                if pgt_form == 'Misto':
-                    # Se for Misto, preenche as variáveis com os dados reais
-                    v1_raw = request.POST.get('valor_1', '0').replace(',', '.')
-                    v2_raw = request.POST.get('valor_2', '0').replace(',', '.')
-                    
-                    v1 = v1_raw
-                    v2 = v2_raw
+                if pgt_raw == 'Misto':
+                    # Pega os tipos e valores
                     t1 = request.POST.get('tipo_pagamento_1')
                     t2 = request.POST.get('tipo_pagamento_2')
+                    v1_str = request.POST.get('valor_1', '0').replace(',', '.')
+                    v2_str = request.POST.get('valor_2', '0').replace(',', '.')
                     
-                    # Calcula total somando as partes
-                    valor_total = float(v1_raw) + float(v2_raw)
+                    v1 = float(v1_str)
+                    v2 = float(v2_str)
+                    valor_total = v1 + v2
                     
-                    # Texto da coluna F (Forma de Pagamento Visual)
-                    texto_pgt_visual = "Misto"
+                    # AQUI ESTÁ O QUE VOCÊ PEDIU:
+                    # Coluna F fica: "Dinheiro/Pix"
+                    texto_final_coluna_F = f"{t1}/{t2}"
                     
                 else:
-                    # Se for Normal (Pix, Dinheiro, Cartão)
-                    valor_raw = request.POST.get('valor', '0').replace(',', '.')
-                    valor_total = float(valor_raw)
-                    texto_pgt_visual = pgt_form # "Pix", "Dinheiro", etc.
+                    # Pagamento Normal
+                    valor_str = request.POST.get('valor', '0').replace(',', '.')
+                    valor_total = float(valor_str)
                     
-                    # CORREÇÃO 2: As variáveis v1, v2, t1, t2 continuam como "-"
-                    # Isso garante que a planilha fica limpa nessas colunas
+                    # Coluna F fica apenas: "Pix" (ou o que for)
+                    texto_final_coluna_F = pgt_raw
 
-                # --- GRAVAÇÃO NA PLANILHA ---
-                # A ordem aqui tem que ser sagrada para bater com o GET depois
+                # --- GRAVAÇÃO NA PLANILHA (SÓ ATÉ A COLUNA I) ---
                 aba.append_row([
-                    data,               # Coluna A
-                    horario,            # Coluna B
-                    cliente,            # Coluna C
-                    servico,            # Coluna D
-                    barbeiro,           # Coluna E (Agora correto: Lucas Borges)
-                    texto_pgt_visual,   # Coluna F
-                    v1,                 # Coluna G (Valor 1 ou -)
-                    v2,                 # Coluna H (Valor 2 ou -)
-                    valor_total,        # Coluna I (Total Geral)
-                    "-",                # Coluna J (Reservado/Obs)
-                    t1,                 # Coluna K (Tipo 1 ou -)
-                    t2                  # Coluna L (Tipo 2 ou -)
+                    data,               # A
+                    horario,            # B
+                    cliente,            # C
+                    servico,            # D
+                    barbeiro,           # E
+                    texto_final_coluna_F, # F (Ex: "Dinheiro/Pix" ou "Dinheiro")
+                    v1,                 # G (Valor 1 ou -)
+                    v2,                 # H (Valor 2 ou -)
+                    valor_total         # I (Total)
+                    # J, K, L... NÃO EXISTEM MAIS
                 ])
                 messages.success(request, "Agendamento salvo com sucesso!")
 
@@ -142,7 +131,7 @@ def home(request):
         return redirect('home')
 
     # ==========================================
-    # 2. LER (GET)
+    # 2. LER (GET) - LÓGICA ATUALIZADA PARA NOVA PLANILHA
     # ==========================================
     agendamentos = []; vendas = []; saidas = []
     kpi_agend = 0; kpi_vend = 0; kpi_said = 0
@@ -161,34 +150,34 @@ def home(request):
                 
                 if len(row) > 0 and row[0] == data_filtro:
                     try:
-                        while len(row) < 12: row.append("")
+                        # Garante que tem colunas suficientes (até I/8)
+                        while len(row) < 9: row.append("")
 
-                        # Leitura do Valor Total (Coluna I - índice 8)
+                        # Valor Total (Coluna I -> índice 8)
                         val_str = str(row[8]).replace(',', '.')
                         val = float(val_str) if val_str else 0.0
                         
-                        # Leitura dos dados brutos
-                        raw_barbeiro = str(row[4]).upper().strip() # Usamos upper aqui SÓ para contar os stats, não para exibir
-                        raw_pgt = str(row[5]).upper().strip()
+                        raw_barbeiro = str(row[4]).upper().strip()
+                        raw_pgt = str(row[5]).strip() # Ex: "Dinheiro/Pix" ou "Pix"
                         raw_servico = str(row[3]).strip()
 
-                        # Identifica Barbeiros (Para os KPIs/Gráficos)
+                        # Identifica Barbeiros
                         chave_barbeiro = 'OUTROS'
                         if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
                         elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
                         elif 'ERIK' in raw_barbeiro or 'ERICK' in raw_barbeiro: chave_barbeiro = 'ERIK'
-
-                        # Item para a tabela visual (Expander)
+                        
+                        # Lista Visual
                         item = {
                             'row_id': i + 1, 
                             'horario': row[1], 
                             'cliente': row[2], 
                             'servico': raw_servico, 
-                            'barbeiro': row[4],  # Aqui pega o nome original da planilha (Lucas Borges)
-                            'forma_pagamento': row[5], 
+                            'barbeiro': row[4], 
+                            'forma_pagamento': raw_pgt, # Mostra "Dinheiro/Pix" na lista
                             'valor_total': val,
-                            'tipo_pagamento_1': row[10], 
-                            'tipo_pagamento_2': row[11]
+                            'tipo_pagamento_1': '', # Não usamos mais essas visualmente na lista rápida
+                            'tipo_pagamento_2': ''
                         }
                         agendamentos.append(item)
                         kpi_agend += val
@@ -208,24 +197,41 @@ def home(request):
                         if e_combo:
                             stats_servicos['BARBA'] = stats_servicos.get('BARBA', 0) + 1
                         
-                        # --- PAGAMENTOS (KPIs) ---
-                        # Verifica se é Misto olhando se tem "/" ou se está escrito "Misto"
-                        if '/' in raw_pgt or 'MISTO' in raw_pgt:
+                        # --- PAGAMENTOS (KPIs - LÓGICA NOVA) ---
+                        # Agora lemos a Coluna F para saber os tipos
+                        # E as colunas G e H para saber os valores
+                        
+                        pgt_upper = raw_pgt.upper()
+                        
+                        if '/' in raw_pgt: 
+                            # É MISTO (Ex: "Dinheiro/Pix")
+                            partes = raw_pgt.split('/')
+                            tipo1 = partes[0].strip().upper()
+                            tipo2 = partes[1].strip().upper() if len(partes) > 1 else ''
+                            
                             try:
                                 v1 = float(str(row[6]).replace(',', '.') or 0) # Coluna G
                                 v2 = float(str(row[7]).replace(',', '.') or 0) # Coluna H
-                                t1 = str(row[10]).upper().strip() # Coluna K
-                                t2 = str(row[11]).upper().strip() # Coluna L
                                 
-                                # Soma nos totais globais
-                                if t1 in totais_pgt: totais_pgt[t1] += v1
-                                if t2 in totais_pgt: totais_pgt[t2] += v2
+                                # Soma nos totais
+                                if tipo1 in totais_pgt: totais_pgt[tipo1] += v1
+                                else:
+                                    if 'PIX' in tipo1: totais_pgt['PIX'] += v1
+                                    elif 'DINHEIRO' in tipo1: totais_pgt['DINHEIRO'] += v1
+                                    elif 'CART' in tipo1: totais_pgt['CARTAO'] += v1
+
+                                if tipo2 in totais_pgt: totais_pgt[tipo2] += v2
+                                else:
+                                    if 'PIX' in tipo2: totais_pgt['PIX'] += v2
+                                    elif 'DINHEIRO' in tipo2: totais_pgt['DINHEIRO'] += v2
+                                    elif 'CART' in tipo2: totais_pgt['CARTAO'] += v2
+                                    
                             except: pass
                         else:
-                            # Pagamento normal
-                            if 'PIX' in raw_pgt: totais_pgt['PIX'] += val
-                            elif 'DINHEIRO' in raw_pgt: totais_pgt['DINHEIRO'] += val
-                            elif 'CART' in raw_pgt: totais_pgt['CARTAO'] += val
+                            # Pagamento normal (Ex: "Pix")
+                            if 'PIX' in pgt_upper: totais_pgt['PIX'] += val
+                            elif 'DINHEIRO' in pgt_upper: totais_pgt['DINHEIRO'] += val
+                            elif 'CART' in pgt_upper: totais_pgt['CARTAO'] += val
 
                     except Exception as e: 
                         print(f"Erro processar linha {i+1}: {e}")
@@ -258,7 +264,6 @@ def home(request):
 
     kpi_lucro = (kpi_agend + kpi_vend) - kpi_said
 
-    # Hora de Brasília
     hora_brasilia = (datetime.utcnow() - timedelta(hours=3)).strftime("%H:%M")
 
     context = {
