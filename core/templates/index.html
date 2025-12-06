@@ -648,6 +648,7 @@
                     </div>
 
                     <div id="valorMisto" style="display:none; background:#fff3cd; padding:15px; border-radius:8px; margin-top:15px; border: 1px solid #ffeeba;">
+                        
                         <label style="margin-top:0; font-size:0.85rem; color:#856404;">Parte 1:</label>
                         <div class="misto-row">
                             <input type="number" id="v1" name="valor_1" step="0.01" placeholder="Valor" oninput="somarMisto()">
@@ -667,7 +668,7 @@
                                 <option value="Cartão">Cartão</option>
                             </select>
                         </div>
-                        
+
                         <div style="text-align:right; font-weight:800; color:#856404; margin-top:10px; font-size:1.1rem;">
                             Total: R$ <span id="totalMistoDisplay">0.00</span>
                         </div>
@@ -903,10 +904,17 @@
 
         // --- Função para somar automaticamente os valores mistos ---
         function somarMisto() {
+            // Pega o valor, se estiver vazio considera 0
             var v1 = parseFloat(document.getElementById('v1').value) || 0;
             var v2 = parseFloat(document.getElementById('v2').value) || 0;
+            
             var total = v1 + v2;
-            document.getElementById('totalMistoDisplay').innerText = total.toFixed(2);
+            
+            // Atualiza o texto do total
+            var display = document.getElementById('totalMistoDisplay');
+            if (display) {
+                display.innerText = total.toFixed(2);
+            }
         }
 
         // --- Configuração dos Gráficos (Chart.js) ---
