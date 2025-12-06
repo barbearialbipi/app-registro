@@ -149,6 +149,35 @@
         .theme-toggle-btn { position: absolute; right: 20px; top: 20px; }
     }
 
+    /* Estilo da Mensagem de Confirmação */
+    .alert-box {
+        background-color: #d1e7dd; 
+        color: #0f5132; 
+        padding: 15px 20px; 
+        margin-bottom: 25px; 
+        border-radius: 10px; 
+        border: 1px solid #badbcc; 
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between; /* Texto na esquerda, X na direita */
+        align-items: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    /* Estilo do botão X */
+    .close-btn {
+        cursor: pointer;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #0f5132;
+        padding-left: 15px;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+    .close-btn:hover {
+        color: #146c43; /* Fica mais escuro ao passar o mouse */
+    }
+
     /* =========================================
        3. FILTRO DE DATA
        ========================================= */
@@ -518,8 +547,9 @@
 
     {% if messages %}
         {% for message in messages %}
-            <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; text-align: center; margin-bottom: 25px; border-radius: 10px; border: 1px solid #badbcc; font-weight: 500;">
-                {{ message }}
+            <div class="alert-box">
+                <span>{{ message }}</span>
+                <span class="close-btn" onclick="this.parentElement.style.display='none';">&times;</span>
             </div>
         {% endfor %}
     {% endif %}
