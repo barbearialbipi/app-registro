@@ -1055,60 +1055,53 @@
         //  SELECT PERSONALIZADO (Criação Automática)
         // ==========================================
         
+        // 7. SELECT CUSTOMIZADO (COM CORREÇÃO PARA O MISTO)
         function setupCustomSelects() {
             var x, i, j, l, ll, selElmnt, a, b, c;
-            /* Procura qualquer elemento com a tag "select" */
             x = document.getElementsByTagName("select");
             l = x.length;
-            
             for (i = 0; i < l; i++) {
                 selElmnt = x[i];
-                
-                // Evita duplicar se já tiver criado (caso a página recarregue partes)
                 if (selElmnt.parentNode.classList.contains("custom-select-container")) continue;
 
-                /* 1. Cria o container (wrapper) */
                 var wrapper = document.createElement("DIV");
                 wrapper.setAttribute("class", "custom-select-container");
                 selElmnt.parentNode.insertBefore(wrapper, selElmnt);
                 wrapper.appendChild(selElmnt);
 
-                /* 2. Cria a DIV que age como o item selecionado (o que vê fechado) */
                 a = document.createElement("DIV");
                 a.setAttribute("class", "select-selected");
-                // Pega o texto da opção selecionada atualmente
                 a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
                 wrapper.appendChild(a);
 
-                /* 3. Cria a lista de opções (escondida) */
                 b = document.createElement("DIV");
                 b.setAttribute("class", "select-items select-hide");
 
                 ll = selElmnt.length;
-                /* Loop por todas as opções do select original */
                 for (j = 0; j < ll; j++) {
-                    /* Cria uma DIV para cada opção */
                     c = document.createElement("DIV");
                     c.innerHTML = selElmnt.options[j].innerHTML;
-                    
-                    // Adiciona evento de clique na opção
                     c.addEventListener("click", function(e) {
                         var y, i, k, s, h, sl, yl;
                         s = this.parentNode.parentNode.getElementsByTagName("select")[0];
                         sl = s.length;
                         h = this.parentNode.previousSibling;
-                        
                         for (i = 0; i < sl; i++) {
                             if (s.options[i].innerHTML == this.innerHTML) {
-                                // Atualiza o select original (oculto)
                                 s.selectedIndex = i;
                                 h.innerHTML = this.innerHTML;
                                 
-                                // Dispara evento de 'change' para o JS do Misto funcionar
+                                // Dispara o evento de mudança padrão
                                 var event = new Event('change');
                                 s.dispatchEvent(event);
 
-                                // Atualiza estilos visuais
+                                // --- CORREÇÃO MÁGICA AQUI ---
+                                // Se for o select de pagamento, força a abertura do Misto
+                                if (s.name === 'pagamento' || s.id === 'pagamentoSelect') {
+                                    toggleMisto();
+                                }
+                                // -----------------------------
+
                                 y = this.parentNode.getElementsByClassName("same-as-selected");
                                 yl = y.length;
                                 for (k = 0; k < yl; k++) {
@@ -1124,7 +1117,6 @@
                 }
                 wrapper.appendChild(b);
 
-                /* 4. Evento para abrir/fechar ao clicar na caixa */
                 a.addEventListener("click", function(e) {
                     e.stopPropagation();
                     closeAllSelect(this);
