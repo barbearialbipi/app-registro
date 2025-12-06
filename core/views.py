@@ -51,43 +51,73 @@ def home(request):
             if tipo_form == 'agendamento':
                 aba = planilha.worksheet("Agendamentos")
                 
-                # --- PREPARA VALORES ---
-                v1 = request.POST.get('valor_1', '0').replace(',', '.')
-                v2 = request.POST.get('valor_2', '0').replace(',', '.')
+                # --- DADOS BÁSICOS ---
+                data = request.POST.get('data')
+                horario = request.POST.get('horario')
+                cliente = request.POST.get('cliente').title() # Deixa nome bonito (Ex: João Silva)
                 
-                # --- LÓGICA DO PAGAMENTO NA PLANILHA ---
-                pgt_form = request.POST.get('pagamento') 
-                t1 = request.POST.get('tipo_pagamento_1', '').upper()
-                t2 = request.POST.get('tipo_pagamento_2', '').upper()
+                # CORREÇÃO 1: Nome do Barbeiro sem .upper()
+                barbeiro = request.POST.get('barbeiro') 
                 
-                texto_final_coluna_F = pgt_form.upper()
+                servico = request.POST.get('servico')
+                com_barba = request.POST.get('com_barba')
+                
+                # Adiciona "+ Barba" se necessário
+                if com_barba == 'on':
+                    servico += " + Barba"
 
-                if pgt_form == 'MISTO':
-                    total = float(v1) + float(v2)
-                    texto_final_coluna_F = f"{t1}/{t2}" 
+                # --- LÓGICA DO PAGAMENTO (CORREÇÃO DAS COLUNAS) ---
+                pgt_form = request.POST.get('pagamento') # Vem "Misto", "Pix", etc.
+                
+                # Variáveis padrão (vazias) para não bagunçar a planilha
+                v1 = "-"
+                t1 = "-"
+                v2 = "-"
+                t2 = "-"
+                valor_total = "0"
+
+                if pgt_form == 'Misto':
+                    # Se for Misto, preenche as variáveis com os dados reais
+                    v1_raw = request.POST.get('valor_1', '0').replace(',', '.')
+                    v2_raw = request.POST.get('valor_2', '0').replace(',', '.')
+                    
+                    v1 = v1_raw
+                    v2 = v2_raw
+                    t1 = request.POST.get('tipo_pagamento_1')
+                    t2 = request.POST.get('tipo_pagamento_2')
+                    
+                    # Calcula total somando as partes
+                    valor_total = float(v1_raw) + float(v2_raw)
+                    
+                    # Texto da coluna F (Forma de Pagamento Visual)
+                    texto_pgt_visual = "Misto"
+                    
                 else:
-                    total = request.POST.get('valor', '0').replace(',', '.')
+                    # Se for Normal (Pix, Dinheiro, Cartão)
+                    valor_raw = request.POST.get('valor', '0').replace(',', '.')
+                    valor_total = float(valor_raw)
+                    texto_pgt_visual = pgt_form # "Pix", "Dinheiro", etc.
+                    
+                    # CORREÇÃO 2: As variáveis v1, v2, t1, t2 continuam como "-"
+                    # Isso garante que a planilha fica limpa nessas colunas
 
-                # --- LÓGICA DA BARBA ---
-                servico_nome = request.POST.get('servico')
-                tem_barba = request.POST.get('com_barba') == 'on'
-                
-                if tem_barba:
-                    servico_nome = f"{servico_nome} com Barba"
-
-                # --- GRAVAÇÃO ---
+                # --- GRAVAÇÃO NA PLANILHA ---
+                # A ordem aqui tem que ser sagrada para bater com o GET depois
                 aba.append_row([
-                    request.POST.get('data'),
-                    request.POST.get('horario'),
-                    request.POST.get('cliente'),
-                    servico_nome,                         
-                    request.POST.get('barbeiro').upper(), 
-                    texto_final_coluna_F,                 
-                    v1, v2, total,
-                    "-",
-                    t1, t2 
+                    data,               # Coluna A
+                    horario,            # Coluna B
+                    cliente,            # Coluna C
+                    servico,            # Coluna D
+                    barbeiro,           # Coluna E (Agora correto: Lucas Borges)
+                    texto_pgt_visual,   # Coluna F
+                    v1,                 # Coluna G (Valor 1 ou -)
+                    v2,                 # Coluna H (Valor 2 ou -)
+                    valor_total,        # Coluna I (Total Geral)
+                    "-",                # Coluna J (Reservado/Obs)
+                    t1,                 # Coluna K (Tipo 1 ou -)
+                    t2                  # Coluna L (Tipo 2 ou -)
                 ])
-                messages.success(request, "Agendamento salvo!")
+                messages.success(request, "Agendamento salvo com sucesso!")
 
             elif tipo_form == 'venda':
                 aba = planilha.worksheet("Vendas")
@@ -133,26 +163,28 @@ def home(request):
                     try:
                         while len(row) < 12: row.append("")
 
+                        # Leitura do Valor Total (Coluna I - índice 8)
                         val_str = str(row[8]).replace(',', '.')
                         val = float(val_str) if val_str else 0.0
                         
-                        raw_barbeiro = str(row[4]).upper().strip()
+                        # Leitura dos dados brutos
+                        raw_barbeiro = str(row[4]).upper().strip() # Usamos upper aqui SÓ para contar os stats, não para exibir
                         raw_pgt = str(row[5]).upper().strip()
                         raw_servico = str(row[3]).strip()
 
-                        # Identifica Barbeiros
+                        # Identifica Barbeiros (Para os KPIs/Gráficos)
                         chave_barbeiro = 'OUTROS'
                         if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
                         elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
                         elif 'ERIK' in raw_barbeiro or 'ERICK' in raw_barbeiro: chave_barbeiro = 'ERIK'
-                        elif 'FABRICIO' in raw_barbeiro or 'FABRÍCIO' in raw_barbeiro: chave_barbeiro = 'FABRICIO'
 
+                        # Item para a tabela visual (Expander)
                         item = {
                             'row_id': i + 1, 
                             'horario': row[1], 
                             'cliente': row[2], 
                             'servico': raw_servico, 
-                            'barbeiro': row[4], 
+                            'barbeiro': row[4],  # Aqui pega o nome original da planilha (Lucas Borges)
                             'forma_pagamento': row[5], 
                             'valor_total': val,
                             'tipo_pagamento_1': row[10], 
@@ -170,29 +202,27 @@ def home(request):
                             stats_barbeiros[chave_barbeiro] += pts
                             total_atendimentos += pts
                         
-                        # --- GRÁFICO SERVIÇOS (SEPARADOS) ---
+                        # --- GRÁFICO SERVIÇOS ---
                         nome_serv_base = servico_upper.replace(' COM BARBA', '').replace('+ BARBA', '').strip()
                         stats_servicos[nome_serv_base] = stats_servicos.get(nome_serv_base, 0) + 1
                         if e_combo:
                             stats_servicos['BARBA'] = stats_servicos.get('BARBA', 0) + 1
                         
-                        # --- PAGAMENTOS (GRÁFICO) ---
+                        # --- PAGAMENTOS (KPIs) ---
+                        # Verifica se é Misto olhando se tem "/" ou se está escrito "Misto"
                         if '/' in raw_pgt or 'MISTO' in raw_pgt:
                             try:
-                                v1 = float(str(row[6]).replace(',', '.') or 0)
-                                v2 = float(str(row[7]).replace(',', '.') or 0)
-                                t1 = str(row[10]).upper().strip()
-                                t2 = str(row[11]).upper().strip()
+                                v1 = float(str(row[6]).replace(',', '.') or 0) # Coluna G
+                                v2 = float(str(row[7]).replace(',', '.') or 0) # Coluna H
+                                t1 = str(row[10]).upper().strip() # Coluna K
+                                t2 = str(row[11]).upper().strip() # Coluna L
                                 
-                                if not t1 and '/' in raw_pgt:
-                                    partes = raw_pgt.split('/')
-                                    t1 = partes[0].strip()
-                                    t2 = partes[1].strip() if len(partes) > 1 else ''
-
+                                # Soma nos totais globais
                                 if t1 in totais_pgt: totais_pgt[t1] += v1
                                 if t2 in totais_pgt: totais_pgt[t2] += v2
                             except: pass
                         else:
+                            # Pagamento normal
                             if 'PIX' in raw_pgt: totais_pgt['PIX'] += val
                             elif 'DINHEIRO' in raw_pgt: totais_pgt['DINHEIRO'] += val
                             elif 'CART' in raw_pgt: totais_pgt['CARTAO'] += val
@@ -228,7 +258,7 @@ def home(request):
 
     kpi_lucro = (kpi_agend + kpi_vend) - kpi_said
 
-    # --- ALTERAÇÃO 2: Cálculo correto do Horário de Brasília (UTC-3) ---
+    # Hora de Brasília
     hora_brasilia = (datetime.utcnow() - timedelta(hours=3)).strftime("%H:%M")
 
     context = {
@@ -242,7 +272,6 @@ def home(request):
         'chart_barb_data': json.dumps(list(stats_barbeiros.values())),
         'chart_serv_labels': json.dumps(list(stats_servicos.keys())),
         'chart_serv_data': json.dumps(list(stats_servicos.values())),
-        # --- ALTERAÇÃO 3: Enviando a hora correta ---
         'hora_agora': hora_brasilia 
     }
     return render(request, 'index.html', context)
