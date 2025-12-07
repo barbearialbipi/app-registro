@@ -407,16 +407,25 @@
         border-bottom: 2px solid var(--border-color); 
         padding-bottom: 10px; text-transform: uppercase;
     }
+    /* Item da lista de produtividade */
     .prod-item { 
-        display: flex; justify-content: space-between; 
-        padding: 12px 0; border-bottom: 1px solid var(--border-color); 
-        font-size: 1.05rem; color: var(--text-secondary);
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; /* Alinha o texto no meio verticalmente */
+        padding: 12px 0; 
+        border-bottom: 1px solid var(--border-color); 
+        font-size: 1rem; /* Ajustei levemente o tamanho para caber melhor */
+        color: var(--text-secondary);
+        
+        /* AQUI ESTÁ A CORREÇÃO: */
+        gap: 15px; /* Cria um espaço obrigatório de 15px entre o nome e o número */
     }
-    .prod-item strong { color: var(--text-primary); }
-    .prod-total { 
-        display: flex; justify-content: space-between; padding: 20px 0 0; 
-        font-weight: 800; font-size: 1.3rem; color: var(--text-primary); 
-        border-top: 2px solid var(--border-color); margin-top: 10px; 
+
+    /* O Número de atendimentos */
+    .prod-item strong { 
+        color: var(--text-primary); 
+        white-space: nowrap; /* Garante que "21 atendimentos" fique sempre na mesma linha */
+        text-align: right;
     }
 
     /* =========================================
