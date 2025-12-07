@@ -421,6 +421,23 @@
         gap: 15px; /* Cria um espaço obrigatório de 15px entre o nome e o número */
     }
 
+   /* ESTILO DO TOTAL GERAL (Corrigido para ficar Negrito e Bonito) */
+    .prod-total { 
+        display: flex; 
+        justify-content: space-between; /* Joga "Total" pra esquerda e "31" pra direita */
+        align-items: center;
+        
+        padding-top: 20px; 
+        margin-top: 15px; 
+        border-top: 3px solid var(--border-color); /* A linha divisória mais grossa */
+        
+        font-size: 1.4rem; /* Aumentei um pouco para destacar */
+        font-weight: 900;  /* Negrito máximo da fonte Poppins */
+        color: var(--text-primary); /* Respeita a cor do tema (Azul ou Branco) */
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    } 
+
     /* O Número de atendimentos */
     .prod-item strong { 
         color: var(--text-primary); 
