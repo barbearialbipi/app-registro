@@ -402,10 +402,21 @@
         color: var(--text-primary);
     }
     .prod-title { 
-        font-weight: 800; color: var(--brand-blue); 
-        margin-bottom: 20px; font-size: 1.2rem; 
+        font-weight: 800; 
+        color: var(--brand-blue); 
+        margin-bottom: 20px; 
+        
+        /* AQUI ESTÁ A CORREÇÃO: */
+        font-size: 1.0rem; /* Diminuí para caber tudo numa linha só */
+        
         border-bottom: 2px solid var(--border-color); 
-        padding-bottom: 10px; text-transform: uppercase;
+        padding-bottom: 10px; 
+        text-transform: uppercase;
+        
+        /* Garante que o texto fique sempre bonito */
+        white-space: nowrap;      /* Força a não quebrar linha */
+        overflow: hidden;         /* Segurança extra */
+        text-overflow: ellipsis;  /* Se a tela for minúscula, põe "..." */
     }
     /* Item da lista de produtividade */
     .prod-item { 
