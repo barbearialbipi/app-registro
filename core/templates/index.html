@@ -975,6 +975,7 @@
         // Gráfico de Pagamentos (Com valores e porcentagem)
         // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
+        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         new Chart(document.getElementById('chartPgt'), {
             type: 'doughnut', 
             data: { 
@@ -989,12 +990,12 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 
-                // 1. Espaço nas laterais para o texto não cortar na tela do celular
+                // 1. LATERAIS APERTADAS (Para o gráfico esticar)
                 layout: {
                     padding: {
-                        left: 30,
-                        right: 30,
-                        bottom: 50,
+                        left: 10,  // Bem pouco espaço nas laterais
+                        right: 10,
+                        bottom: 10,
                         top: 0
                     }
                 },
@@ -1002,31 +1003,36 @@
                 plugins: { 
                     legend: { 
                         position: 'bottom', 
-                        labels: { padding: 20, font: { family: 'Poppins' }, color: '#888' } 
+                        labels: { 
+                            padding: 10, 
+                            boxWidth: 12, 
+                            font: { family: 'Poppins', size: 11 }, 
+                            color: '#888' 
+                        } 
                     }, 
                     title: { 
                         display: true, 
                         text: 'Formas de Pagamento', 
-                        font: { family: 'Poppins', size: 16 },
+                        font: { family: 'Poppins', size: 15 },
                         
-                        // 2. A CORREÇÃO MÁGICA:
-                        // Adiciona 50px de espaço EMBAIXO do título.
-                        // O gráfico desce e o rótulo do cartão cabe ali sem tocar no texto!
+                        // 2. SEGURANÇA DO TÍTULO:
+                        // Deixei 35px aqui. É o suficiente para o texto "R$..." caber 
+                        // sem bater no título, mas sem empurrar o gráfico demais pra baixo.
                         padding: {
                             top: 10,
-                            bottom: 50 
+                            bottom: 35 
                         }
                     },
                     
-                    // CONFIGURAÇÃO DOS VALORES (FORA DO GRÁFICO)
+                    // CONFIGURAÇÃO DOS VALORES
                     datalabels: {
                         color: function(context) {
                             return context.dataset.backgroundColor[context.dataIndex];
                         },
                         anchor: 'end',
                         align: 'end',
-                        offset: 4, 
-                        font: { family: 'Poppins', weight: 'bold', size: 11 },
+                        offset: 0, 
+                        font: { family: 'Poppins', weight: 'bold', size: 10 },
                         formatter: (value, ctx) => {
                             if (value === 0) return null;
                             let sum = 0;
