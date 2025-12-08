@@ -976,6 +976,7 @@
         // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
+        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         new Chart(document.getElementById('chartPgt'), {
             type: 'doughnut', 
             data: { 
@@ -990,21 +991,23 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 
-                // 1. LATERAIS APERTADAS (Para o gráfico esticar)
+                // 1. OTIMIZAÇÃO DE ESPAÇO (Máximo tamanho possível)
                 layout: {
                     padding: {
-                        left: 10,  // Bem pouco espaço nas laterais
+                        left: 10,  
                         right: 10,
-                        bottom: 10,
-                        top: 0
+                        top: 0,
+                        bottom: 0 
                     }
                 },
                 
                 plugins: { 
                     legend: { 
-                        position: 'bottom', 
+                        position: 'bottom', // Força ficar embaixo
+                        align: 'center',    // Centraliza
                         labels: { 
-                            padding: 10, 
+                            // AQUI ESTÁ O SEGREDO DA LEGENDA:
+                            padding: 30,       // Empurra a legenda bem para baixo (longe do gráfico)
                             boxWidth: 12, 
                             font: { family: 'Poppins', size: 11 }, 
                             color: '#888' 
@@ -1015,23 +1018,21 @@
                         text: 'Formas de Pagamento', 
                         font: { family: 'Poppins', size: 15 },
                         
-                        // 2. SEGURANÇA DO TÍTULO:
-                        // Deixei 35px aqui. É o suficiente para o texto "R$..." caber 
-                        // sem bater no título, mas sem empurrar o gráfico demais pra baixo.
+                        // 2. SEGURANÇA DO TÍTULO (Topo)
                         padding: {
                             top: 10,
-                            bottom: 35 
+                            bottom: 45 // Espaço generoso para o valor do Cartão não bater no texto
                         }
                     },
                     
-                    // CONFIGURAÇÃO DOS VALORES
+                    // CONFIGURAÇÃO DOS VALORES (R$ e %)
                     datalabels: {
                         color: function(context) {
                             return context.dataset.backgroundColor[context.dataIndex];
                         },
                         anchor: 'end',
                         align: 'end',
-                        offset: 0, 
+                        offset: 2, // Leve afastamento da fatia
                         font: { family: 'Poppins', weight: 'bold', size: 10 },
                         formatter: (value, ctx) => {
                             if (value === 0) return null;
@@ -1046,7 +1047,7 @@
                 } 
             }
         });
-
+        
         // ... (Mantenha os outros gráficos chartServicos e chartBarbeiros abaixo) ...
 
         // Gráfico 2: Serviços (Barras)
