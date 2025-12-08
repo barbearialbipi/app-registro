@@ -973,6 +973,7 @@
         Chart.register(ChartDataLabels);
 
         // --- GRÁFICO 1: PAGAMENTOS (PIZZA - SEM LEGENDA, TUDO JUNTO) ---
+        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         new Chart(document.getElementById('chartPgt'), {
             type: 'doughnut', 
             data: { 
@@ -987,60 +988,50 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 
-                // Mantemos a rotação de 25 graus para distribuir bem (Triângulo)
+                // Rotação diagonal (mantém os valores espalhados)
                 rotation: 25,
 
-                // Aumentamos a margem geral para caber os 3 textos (Nome, R$, %)
                 layout: {
-                    padding: 40 
+                    padding: {
+                        left: 50,  
+                        right: 50, 
+                        top: 0,    // TIRA TUDO DE CIMA
+                        bottom: 50 // Mantém espaço embaixo para não cortar o texto
+                    }
                 },
                 
                 plugins: { 
-                    // 1. REMOVE A LEGENDA LÁ DE BAIXO (Fica tudo no gráfico agora)
                     legend: { display: false }, 
                     
                     title: { 
                         display: true, 
                         text: 'Formas de Pagamento', 
                         font: { family: 'Poppins', size: 16 },
+                        
+                        // CORREÇÃO: "Cola" o título no teto e empurra o gráfico pra baixo
                         padding: {
-                            top: 10,
-                            bottom: 20 
+                            top: 0,    // Remove espaço acima do título
+                            bottom: 50 // Espaço para o "Cartão" caber embaixo do título
                         }
                     },
                     
-                    // 2. CONFIGURAÇÃO DO TEXTO COMPLETO
                     datalabels: {
-                        // A cor do texto segue a cor da fatia
                         color: function(context) {
                             return context.dataset.backgroundColor[context.dataIndex];
                         },
-                        
-                        // Posicionamento para fora
                         anchor: 'end',
                         align: 'end',
                         offset: 5, 
-                        
-                        // Fonte moderna
-                        font: { family: 'Poppins', weight: 'bold', size: 11 },
-                        
-                        // O FORMATADOR MÁGICO
+                        font: { family: 'Poppins', weight: 'bold', size: 10 },
                         formatter: (value, ctx) => {
                             if (value === 0) return null;
                             
-                            // 1. Pega o Nome (Pix, Dinheiro...)
                             let label = ctx.chart.data.labels[ctx.dataIndex];
-                            
-                            // 2. Calcula %
                             let sum = 0;
                             let dataArr = ctx.chart.data.datasets[0].data;
                             dataArr.map(data => { sum += data; });
                             let percentage = (value * 100 / sum).toFixed(0) + "%";
                             
-                            // 3. Retorna tudo empilhado:
-                            // NOME
-                            // R$ VALOR
-                            // (%)
                             return `${label.toUpperCase()}\nR$ ${value}\n(${percentage})`; 
                         },
                         textAlign: 'center'
