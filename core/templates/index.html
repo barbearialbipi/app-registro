@@ -972,11 +972,7 @@
         // Ativa o plugin globalmente (Obrigatório)
         Chart.register(ChartDataLabels);
 
-        // Gráfico de Pagamentos (Com valores e porcentagem)
-        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
-        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
-        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
-        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
+        // --- GRÁFICO 1: PAGAMENTOS (PIZZA - SEM LEGENDA, TUDO JUNTO) ---
         new Chart(document.getElementById('chartPgt'), {
             type: 'doughnut', 
             data: { 
@@ -990,57 +986,62 @@
             options: { 
                 responsive: true,
                 maintainAspectRatio: false,
-                rotation: 180,
-                // 1. OTIMIZAÇÃO DE ESPAÇO (Máximo tamanho possível)
+                
+                // Mantemos a rotação de 25 graus para distribuir bem (Triângulo)
+                rotation: 25,
+
+                // Aumentamos a margem geral para caber os 3 textos (Nome, R$, %)
                 layout: {
-                    padding: {
-                        left: 10,  
-                        right: 10,
-                        top: 0,
-                        bottom: 0 
-                    }
+                    padding: 40 
                 },
                 
                 plugins: { 
-                    legend: { 
-                        position: 'bottom', // Força ficar embaixo
-                        align: 'center',    // Centraliza
-                        labels: { 
-                            // AQUI ESTÁ O SEGREDO DA LEGENDA:
-                            padding: 35,       // Empurra a legenda bem para baixo (longe do gráfico)
-                            boxWidth: 12, 
-                            font: { family: 'Poppins', size: 11 }, 
-                            color: '#888' 
-                        } 
-                    }, 
+                    // 1. REMOVE A LEGENDA LÁ DE BAIXO (Fica tudo no gráfico agora)
+                    legend: { display: false }, 
+                    
                     title: { 
                         display: true, 
                         text: 'Formas de Pagamento', 
-                        font: { family: 'Poppins', size: 15 },
-                        
-                        // 2. SEGURANÇA DO TÍTULO (Topo)
+                        font: { family: 'Poppins', size: 16 },
                         padding: {
                             top: 10,
-                            bottom: 45 // Espaço generoso para o valor do Cartão não bater no texto
+                            bottom: 20 
                         }
                     },
                     
-                    // CONFIGURAÇÃO DOS VALORES (R$ e %)
+                    // 2. CONFIGURAÇÃO DO TEXTO COMPLETO
                     datalabels: {
+                        // A cor do texto segue a cor da fatia
                         color: function(context) {
                             return context.dataset.backgroundColor[context.dataIndex];
                         },
+                        
+                        // Posicionamento para fora
                         anchor: 'end',
                         align: 'end',
-                        offset: 2, // Leve afastamento da fatia
-                        font: { family: 'Poppins', weight: 'bold', size: 10 },
+                        offset: 5, 
+                        
+                        // Fonte moderna
+                        font: { family: 'Poppins', weight: 'bold', size: 11 },
+                        
+                        // O FORMATADOR MÁGICO
                         formatter: (value, ctx) => {
                             if (value === 0) return null;
+                            
+                            // 1. Pega o Nome (Pix, Dinheiro...)
+                            let label = ctx.chart.data.labels[ctx.dataIndex];
+                            
+                            // 2. Calcula %
                             let sum = 0;
                             let dataArr = ctx.chart.data.datasets[0].data;
                             dataArr.map(data => { sum += data; });
                             let percentage = (value * 100 / sum).toFixed(0) + "%";
-                            return `R$ ${value}\n(${percentage})`; 
+                            
+                            // 3. Retorna tudo empilhado:
+                            // NOME
+                            // R$ VALOR
+                            // (%)
+                            return `${label.toUpperCase()}\nR$ ${value}\n(${percentage})`; 
                         },
                         textAlign: 'center'
                     }
