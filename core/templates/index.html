@@ -973,6 +973,7 @@
         Chart.register(ChartDataLabels);
 
         // Gráfico de Pagamentos (Com valores e porcentagem)
+        // --- GRÁFICO 1: PAGAMENTOS (PIZZA) ---
         new Chart(document.getElementById('chartPgt'), {
             type: 'doughnut', 
             data: { 
@@ -980,40 +981,51 @@
                 datasets: [{ 
                     data: pgtData, 
                     backgroundColor: ['#2ecc71', '#3498db', '#e74c3c'],
-                    borderWidth: 2,
-                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1f2937' : '#ffffff'
+                    borderWidth: 0, // Sem borda para ficar mais moderno
                 }] 
             },
             options: { 
                 responsive: true,
                 maintainAspectRatio: false,
+                
+                // CRUCIAL: Adiciona espaço em volta para os números caberem fora
+                layout: {
+                    padding: 30 
+                },
+                
                 plugins: { 
-                    legend: { position: 'bottom', labels: { padding: 20, font: { family: 'Poppins' } } }, 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { padding: 20, font: { family: 'Poppins' }, color: '#888' } 
+                    }, 
                     title: { display: true, text: 'Formas de Pagamento', font: { family: 'Poppins', size: 16 } },
                     
-                    // --- CONFIGURAÇÃO DOS VALORES (NOVO) ---
+                    // CONFIGURAÇÃO DOS VALORES (FORA DO GRÁFICO)
                     datalabels: {
-                        color: '#ffffff', // Cor do texto (Branco para destacar no colorido)
-                        font: {
-                            family: 'Poppins',
-                            weight: 'bold',
-                            size: 11
+                        // AQUI ESTÁ O TRUQUE: A cor do texto é a mesma cor da fatia
+                        color: function(context) {
+                            return context.dataset.backgroundColor[context.dataIndex];
                         },
+                        
+                        // Joga o texto para fora
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 4, // Distância da fatia
+                        
+                        font: { family: 'Poppins', weight: 'bold', size: 11 },
+                        
                         formatter: (value, ctx) => {
-                            if (value === 0) return null; // Não mostra se for zero
-
-                            // Calcula a soma total para achar a porcentagem
+                            if (value === 0) return null;
                             let sum = 0;
                             let dataArr = ctx.chart.data.datasets[0].data;
                             dataArr.map(data => { sum += data; });
                             let percentage = (value * 100 / sum).toFixed(0) + "%";
-
-                            // Retorna: Valor em cima, Porcentagem embaixo
+                            
+                            // Mostra: R$ Valor e (%)
                             return `R$ ${value}\n(${percentage})`; 
                         },
                         textAlign: 'center'
                     }
-                    // ---------------------------------------
                 } 
             }
         });
