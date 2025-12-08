@@ -6,6 +6,7 @@
     <title>Relatório Barbearia Lucas Borges</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#a77507">
@@ -966,23 +967,58 @@
         const barbData = JSON.parse('{{ chart_barb_data|escapejs }}');
 
         // Gráfico 1: Pagamentos (Pizza)
+        // 4. CHARTS
+        
+        // Ativa o plugin globalmente (Obrigatório)
+        Chart.register(ChartDataLabels);
+
+        // Gráfico de Pagamentos (Com valores e porcentagem)
         new Chart(document.getElementById('chartPgt'), {
-            type: 'doughnut',
+            type: 'doughnut', 
             data: { 
                 labels: pgtLabels, 
                 datasets: [{ 
                     data: pgtData, 
-                    backgroundColor: ['#2ecc71', '#3498db', '#e74c3c'] 
+                    backgroundColor: ['#2ecc71', '#3498db', '#e74c3c'],
+                    borderWidth: 2,
+                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1f2937' : '#ffffff'
                 }] 
             },
             options: { 
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: { 
-                    legend: {position:'bottom'}, 
-                    title: { display: true, text: 'Formas de Pagamento' } 
-                }, 
-                maintainAspectRatio: false 
+                    legend: { position: 'bottom', labels: { padding: 20, font: { family: 'Poppins' } } }, 
+                    title: { display: true, text: 'Formas de Pagamento', font: { family: 'Poppins', size: 16 } },
+                    
+                    // --- CONFIGURAÇÃO DOS VALORES (NOVO) ---
+                    datalabels: {
+                        color: '#ffffff', // Cor do texto (Branco para destacar no colorido)
+                        font: {
+                            family: 'Poppins',
+                            weight: 'bold',
+                            size: 11
+                        },
+                        formatter: (value, ctx) => {
+                            if (value === 0) return null; // Não mostra se for zero
+
+                            // Calcula a soma total para achar a porcentagem
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => { sum += data; });
+                            let percentage = (value * 100 / sum).toFixed(0) + "%";
+
+                            // Retorna: Valor em cima, Porcentagem embaixo
+                            return `R$ ${value}\n(${percentage})`; 
+                        },
+                        textAlign: 'center'
+                    }
+                    // ---------------------------------------
+                } 
             }
         });
+
+        // ... (Mantenha os outros gráficos chartServicos e chartBarbeiros abaixo) ...
 
         // Gráfico 2: Serviços (Barras)
         new Chart(document.getElementById('chartServicos'), {
@@ -997,7 +1033,8 @@
             options: { 
                 plugins: { 
                     legend: {display:false}, 
-                    title: { display: true, text: 'Serviços Realizados' } 
+                    title: { display: true, text: 'Serviços Realizados' },
+                    datalabels: { display: false }
                 }, 
                 maintainAspectRatio: false 
             }
@@ -1005,18 +1042,16 @@
 
         // Gráfico 3: Barbeiros (Barras)
         new Chart(document.getElementById('chartBarbeiros'), {
-            type: 'bar',
+            type: 'bar', 
             data: { 
                 labels: barbLabels, 
-                datasets: [{ 
-                    data: barbData, 
-                    backgroundColor: '#9b59b6' 
-                }] 
+                datasets: [{ data: barbData, backgroundColor: '#9b59b6' }] 
             },
             options: { 
                 plugins: { 
-                    legend: {display:false}, 
-                    title: { display: true, text: 'Produtividade (Gráfico)' } 
+                    legend: { display: false }, 
+                    title: { display: true, text: 'Produtividade (Gráfico)' },
+                    datalabels: { display: false } // SINTAXE CORRIGIDA
                 }, 
                 maintainAspectRatio: false 
             }
