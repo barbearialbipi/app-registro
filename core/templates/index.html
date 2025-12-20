@@ -277,8 +277,15 @@
     .tab-content.active { display: block; } 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     
+    /* CORREÇÃO PARA O MENU NÃO CORTAR NO PC */
     @media(min-width: 900px) {
-        .tab-content.active { display: grid; grid-template-columns: 350px 1fr; gap: 40px; }
+        .tab-content.active { 
+            display: grid; 
+            grid-template-columns: 350px 1fr; 
+            gap: 40px; 
+            /* Força uma altura mínima para caber o menu dropdown */
+            min-height: 500px; 
+        }
     }
 
     /* =========================================
