@@ -1069,39 +1069,48 @@
             }
         });
 
-        // Gráfico 3: Barbeiros (Barras)
-        // Gráfico 3: Barbeiros (Barras - AGORA É FATURAMENTO)
+        // Gráfico 3: Barbeiros (Barras - FATURAMENTO)
         new Chart(document.getElementById('chartBarbeiros'), {
             type: 'bar', 
             data: { 
                 labels: barbLabels, 
                 datasets: [{ 
                     data: barbData, 
-                    backgroundColor: '#9b59b6',
-                    borderRadius: 5 // Deixa a barra arredondada, fica mais bonito
+                    backgroundColor: '#39ff14', // Verde Neon Brilhoso
+                    borderRadius: 5,
+                    borderWidth: 1,
+                    borderColor: '#32e012'
                 }] 
             },
             options: { 
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10 // Um pouco de respiro geral no topo
+                    }
+                },
                 plugins: { 
                     legend: { display: false }, 
                     
-                    // Mudamos o título aqui
                     title: { 
                         display: true, 
                         text: 'Produtividade por Barbeiro (R$)',
-                        font: { size: 16 }
+                        font: { size: 16 },
+                        color: '#ffffff', // Força título branco para destacar no fundo escuro
+                        padding: {
+                            top: 10,
+                            bottom: 40 // <--- AQUI: 40px de margem entre o título e as barras
+                        }
                     },
                     
-                    // Configuração para mostrar o valor em cima da barra
                     datalabels: { 
                         display: true,
-                        color: '#fff', // Texto branco
+                        color: '#ffffff', // Texto branco para ler bem no fundo escuro
                         anchor: 'end',
-                        align: 'top', // Fica logo acima da barra ou no topo dela
+                        align: 'top', 
                         formatter: function(value) {
-                            return 'R$ ' + value.toFixed(2); // Ex: R$ 150.00
+                            return 'R$ ' + value.toFixed(2); 
                         },
                         font: { weight: 'bold' }
                     }
@@ -1109,12 +1118,20 @@
                 scales: {
                     y: {
                         beginAtZero: true,
+                        grace: '15%', // <--- AQUI: Adiciona 15% de "espaço vazio" acima da barra mais alta
                         ticks: {
-                            // Adiciona R$ no eixo Y também
                             callback: function(value) {
                                 return 'R$ ' + value;
-                            }
+                            },
+                            color: '#rgba(255,255,255,0.7)' // Cor dos números do eixo Y
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.1)' // Linhas da grade mais suaves
                         }
+                    },
+                    x: {
+                        ticks: { color: '#ffffff' }, // Nomes dos barbeiros em branco
+                        grid: { display: false }
                     }
                 }
             }
