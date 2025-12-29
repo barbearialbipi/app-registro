@@ -137,6 +137,10 @@ def home(request):
     kpi_agend = 0; kpi_vend = 0; kpi_said = 0
     
     stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
+    
+    # --- NOVO 1: Variável para somar o dinheiro ---
+    faturamento_barbeiros = {'LUCAS': 0.0, 'ALUIZIO': 0.0, 'ERIK': 0.0} 
+
     totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     stats_servicos = {}
     total_atendimentos = 0
@@ -190,6 +194,9 @@ def home(request):
                             pts = 2 if e_combo else 1
                             stats_barbeiros[chave_barbeiro] += pts
                             total_atendimentos += pts
+                            
+                            # --- NOVO 2: Soma o valor ao faturamento ---
+                            faturamento_barbeiros[chave_barbeiro] += val
                         
                         # --- GRÁFICO SERVIÇOS ---
                         nome_serv_base = servico_upper.replace(' COM BARBA', '').replace('+ BARBA', '').strip()
@@ -274,13 +281,16 @@ def home(request):
         'chart_pgt_labels': json.dumps(['Dinheiro', 'Pix', 'Cartão']),
         'chart_pgt_data': json.dumps([totais_pgt['DINHEIRO'], totais_pgt['PIX'], totais_pgt['CARTAO']]),
         'chart_barb_labels': json.dumps(list(stats_barbeiros.keys())),
-        'chart_barb_data': json.dumps(list(stats_barbeiros.values())),
+        
+        # --- NOVO 3: Usamos a nova lista de dinheiro no gráfico ---
+        'chart_barb_data': json.dumps(list(faturamento_barbeiros.values())),
+        
         'chart_serv_labels': json.dumps(list(stats_servicos.keys())),
         'chart_serv_data': json.dumps(list(stats_servicos.values())),
         'hora_agora': hora_brasilia 
     }
     return render(request, 'index.html', context)
-
+    
 # --- DELETAR ---
 def deletar_item(request, tipo, row_id):
     if not request.session.get('autenticado'): return redirect('login')
