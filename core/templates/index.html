@@ -1070,19 +1070,53 @@
         });
 
         // Gráfico 3: Barbeiros (Barras)
+        // Gráfico 3: Barbeiros (Barras - AGORA É FATURAMENTO)
         new Chart(document.getElementById('chartBarbeiros'), {
             type: 'bar', 
             data: { 
                 labels: barbLabels, 
-                datasets: [{ data: barbData, backgroundColor: '#9b59b6' }] 
+                datasets: [{ 
+                    data: barbData, 
+                    backgroundColor: '#9b59b6',
+                    borderRadius: 5 // Deixa a barra arredondada, fica mais bonito
+                }] 
             },
             options: { 
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: { 
                     legend: { display: false }, 
-                    title: { display: true, text: 'Produtividade (Gráfico)' },
-                    datalabels: { display: false } // SINTAXE CORRIGIDA
-                }, 
-                maintainAspectRatio: false 
+                    
+                    // Mudamos o título aqui
+                    title: { 
+                        display: true, 
+                        text: 'Produtividade por Barbeiro (R$)',
+                        font: { size: 16 }
+                    },
+                    
+                    // Configuração para mostrar o valor em cima da barra
+                    datalabels: { 
+                        display: true,
+                        color: '#fff', // Texto branco
+                        anchor: 'end',
+                        align: 'top', // Fica logo acima da barra ou no topo dela
+                        formatter: function(value) {
+                            return 'R$ ' + value.toFixed(2); // Ex: R$ 150.00
+                        },
+                        font: { weight: 'bold' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            // Adiciona R$ no eixo Y também
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        }
+                    }
+                }
             }
         });
         
