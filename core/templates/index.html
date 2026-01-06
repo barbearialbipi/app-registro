@@ -1074,10 +1074,9 @@
     // ==========================================
     
     // Verifica tema inicial
-        const isDarkInit = document.documentElement.getAttribute('data-theme') === 'dark';
-    
-    // Define a cor inicial para os textos
-        const corInicial = isDarkInit ? '#f0f8ff' : '#00275a'; 
+        const isDarkInit = localStorage.getItem('theme') === 'dark';
+        const corInicialTexto = isDarkInit ? '#f0f8ff' : '#00275a';
+        const corInicialGrade = isDarkInit ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'; 
 
         new Chart(document.getElementById('chartBarbeiros'), {
             type: 'bar', 
