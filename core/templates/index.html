@@ -1069,68 +1069,60 @@
             }
         });
 
-        // Gráfico 3: Barbeiros (Barras - FATURAMENTO)
+        // ==========================================
+    // GRÁFICO 3: Barbeiros
+    // ==========================================
+    
+    // Verifica tema inicial
+        const isDarkInit = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Define a cor inicial para os textos
+        const corInicial = isDarkInit ? '#f0f8ff' : '#00275a'; 
+
         new Chart(document.getElementById('chartBarbeiros'), {
             type: 'bar', 
             data: { 
                 labels: barbLabels, 
                 datasets: [{ 
                     data: barbData, 
-                    backgroundColor: '#39ff14', // Verde Neon Brilhoso
-                    borderRadius: 5,
-                    borderWidth: 1,
-                    borderColor: '#32e012'
+                    backgroundColor: '#00275a', // Barra Azul Fixa
+                    borderRadius: 5
                 }] 
             },
             options: { 
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        top: 10 // Um pouco de respiro geral no topo
-                    }
-                },
+                layout: { padding: { top: 25 } },
                 plugins: { 
                     legend: { display: false }, 
-                    
+                
                     title: { 
                         display: true, 
-                        text: 'Produtividade por Barbeiro (R$)',
+                        text: 'Produtividade Por Barbeiro (R$)',
                         font: { size: 16 },
-                        color: '#ffffff', // Força título branco para destacar no fundo escuro
-                        padding: {
-                            top: 10,
-                            bottom: 40 // <--- AQUI: 40px de margem entre o título e as barras
-                        }
+                        color: corInicial, // Inicia correto
+                        padding: { top: 10, bottom: 20 }
                     },
-                    
+                
+                // AQUI É O IMPORTANTE:
                     datalabels: { 
                         display: true,
-                        color: '#ffffff', // Texto branco para ler bem no fundo escuro
+                        color: corInicial, // Inicia com a cor certa (Gelo ou Azul)
                         anchor: 'end',
                         align: 'top', 
-                        formatter: function(value) {
-                            return 'R$ ' + value.toFixed(2); 
-                        },
+                        formatter: function(value) { return 'R$ ' + value.toFixed(2); },
                         font: { weight: 'bold' }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grace: '15%', // <--- AQUI: Adiciona 15% de "espaço vazio" acima da barra mais alta
-                        ticks: {
-                            callback: function(value) {
-                                return 'R$ ' + value;
-                            },
-                            color: '#rgba(255,255,255,0.7)' // Cor dos números do eixo Y
-                        },
-                        grid: {
-                            color: 'rgba(255,255,255,0.1)' // Linhas da grade mais suaves
-                        }
+                        grace: '10%',
+                        ticks: { callback: function(value) { return 'R$ ' + value; }, color: corInicial },
+                        grid: { color: isDarkInit ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
                     },
                     x: {
-                        ticks: { color: '#ffffff' }, // Nomes dos barbeiros em branco
+                        ticks: { color: corInicial },
                         grid: { display: false }
                     }
                 }
@@ -1172,27 +1164,47 @@
             const html = document.documentElement;
             const btn = document.querySelector('.theme-toggle-btn');
             const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-            
+    
+    // Variável para a cor do número (DataLabel) do Gráfico 3
+            let corNumeroGrafico3 = '';
+
             if (html.getAttribute('data-theme') === 'dark') {
-                // --- MUDAR PARA CLARO ---
+        // --- MUDAR PARA CLARO ---
                 html.removeAttribute('data-theme'); 
                 btn.innerText = '🌙';
                 localStorage.setItem('theme', 'light');
-                
-                // Muda a barra para DOURADO
                 metaThemeColor.setAttribute('content', '#a77507');
-                
-                updateChartColors('light');
+        
+        // Atualiza tudo (Títulos, Eixos...)
+                if (typeof updateChartColors === "function") updateChartColors('light');
+        
+        // No claro, o número deve ser AZUL
+                corNumeroGrafico3 = '#00275a';
+
             } else {
-                // --- MUDAR PARA ESCURO ---
+        // --- MUDAR PARA ESCURO ---
                 html.setAttribute('data-theme', 'dark'); 
                 btn.innerText = '☀️';
                 localStorage.setItem('theme', 'dark');
-                
-                // Muda a barra para AZUL PROFUNDO
                 metaThemeColor.setAttribute('content', '#00275a');
-                
-                updateChartColors('dark');
+        
+        // Atualiza tudo (Títulos, Eixos...)
+                if (typeof updateChartColors === "function") updateChartColors('dark');
+        
+        // No escuro, o número deve ser BRANCO GELO
+                corNumeroGrafico3 = '#f0f8ff';
+    }
+
+    // --- CORREÇÃO PONTUAL: SÓ O NÚMERO DO GRÁFICO 3 ---
+            const chart3 = Chart.getChart("chartBarbeiros");
+    
+            if (chart3) {
+        // Se tiver o plugin de números (datalabels), muda a cor dele
+                if (chart3.options.plugins.datalabels) {
+                    chart3.options.plugins.datalabels.color = corNumeroGrafico3;
+                }
+        // Atualiza o gráfico para aplicar a cor no número
+                chart3.update();
             }
         }
 
