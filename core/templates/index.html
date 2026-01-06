@@ -1070,13 +1070,16 @@
         });
 
         // ==========================================
+    // ==========================================
     // GRÁFICO 3: Barbeiros
     // ==========================================
     
-    // Verifica tema inicial
+    // CORREÇÃO AQUI: Olhamos direto para o LocalStorage para garantir a cor certa na inicialização
         const isDarkInit = localStorage.getItem('theme') === 'dark';
+    
+    // Se for dark, usa Branco Gelo (#f0f8ff), se não, Azul (#00275a)
         const corInicialTexto = isDarkInit ? '#f0f8ff' : '#00275a';
-        const corInicialGrade = isDarkInit ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'; 
+        const corInicialGrade = isDarkInit ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
         new Chart(document.getElementById('chartBarbeiros'), {
             type: 'bar', 
@@ -1084,7 +1087,7 @@
                 labels: barbLabels, 
                 datasets: [{ 
                     data: barbData, 
-                    backgroundColor: '#28a745', // Barra Verde Fixa
+                    backgroundColor: '#28a745', // Mantendo a barra VERDE
                     borderRadius: 5
                 }] 
             },
@@ -1094,19 +1097,16 @@
                 layout: { padding: { top: 25 } },
                 plugins: { 
                     legend: { display: false }, 
-                
                     title: { 
                         display: true, 
-                        text: 'Produtividade Por Barbeiro (R$)',
+                        text: 'Faturamento por Barbeiro (R$)',
                         font: { size: 16 },
-                        color: corInicial, // Inicia correto
+                        color: corInicialTexto, // Já nasce com a cor certa
                         padding: { top: 10, bottom: 20 }
                     },
-                
-                // AQUI É O IMPORTANTE:
                     datalabels: { 
                         display: true,
-                        color: corInicial, // Inicia com a cor certa (Gelo ou Azul)
+                        color: corInicialTexto, // Já nasce com a cor certa (Branco ou Azul)
                         anchor: 'end',
                         align: 'top', 
                         formatter: function(value) { return 'R$ ' + value.toFixed(2); },
@@ -1117,11 +1117,11 @@
                     y: {
                         beginAtZero: true,
                         grace: '10%',
-                        ticks: { callback: function(value) { return 'R$ ' + value; }, color: corInicial },
-                        grid: { color: isDarkInit ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
+                        ticks: { callback: function(value) { return 'R$ ' + value; }, color: corInicialTexto },
+                        grid: { color: corInicialGrade }
                     },
                     x: {
-                        ticks: { color: corInicial },
+                        ticks: { color: corInicialTexto },
                         grid: { display: false }
                     }
                 }
