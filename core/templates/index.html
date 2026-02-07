@@ -580,92 +580,62 @@
         font-weight: 700;
     }
 
+    /* =========================================
+       CORREÇÃO PARA MOBILE (VENDAS E GERAL)
+       ========================================= */
     @media (max-width: 768px) {
     
-        /* 1. RESET GERAL */
-        #vendas table tbody tr td {
-            padding-top: 8px !important;
-            padding-bottom: 8px !important;
-            vertical-align: middle !important;
-            border: none !important;
-        }
-    
-        /* --- COLUNA 1: PRODUTO (Agora com margem na esquerda também) --- */
-        #vendas table tbody tr td:first-child {
-            /* AQUI: Aumentei para 15px para desencostar da borda da tela */
-            padding-left: 15px !important; 
+        /* 1. RESET E ALINHAMENTO GERAL DAS TABELAS */
+        /* Isso garante que todas as abas tenham o comportamento de "Card" */
+        tbody tr td {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important; /* Centraliza verticalmente */
+            padding: 12px 15px !important;  /* Espaçamento interno */
+            text-align: right !important;   /* Força o texto do valor para a direita */
             
-            /* Margem de segurança na direita (para o texto não invadir o vizinho) */
-            padding-right: 5px !important; 
-            
-            max-width: 100px; 
+            /* A MÁGICA: Cria um espaço invisível de 20px entre o Rótulo e o Texto */
+            gap: 20px; 
         }
-    
-        /* Texto do Produto */
-        #vendas table tbody tr td:first-child div span:first-child {
-            font-size: clamp(0.7rem, 3.5vw, 0.9rem) !important;
-            line-height: 1.2 !important;
-            font-weight: 500;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            white-space: normal;
+
+        /* Garante que o rótulo (Ex: PRODUTO) nunca encolha ou quebre */
+        tbody tr td::before {
+            flex-shrink: 0; /* Não deixa o rótulo ser esmagado */
         }
+
+        /* --- AJUSTES ESPECÍFICOS PARA A ABA VENDAS (#tab-venda) --- */
         
-        /* Data/Hora */
-        #vendas table tbody tr td:first-child div span:last-child {
-            font-size: 0.65rem !important;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 2px;
-        }
-    
-        /* --- COLUNA 2: VENDEDOR --- */
-        #vendas table tbody tr td:nth-child(2) {
-            /* Espaço entre Produto e Vendedor */
-            padding-left: 15px !important; 
+        /* Coluna 1: Descrição do Produto */
+        #tab-venda table tbody tr td:first-child {
+            /* Permite que o texto quebre linha se for muito grande */
+            white-space: normal !important; 
+            word-wrap: break-word;
+            line-height: 1.3;
             
-            max-width: 65px;
-            text-align: left;
-        }
-    
-        #vendas table tbody tr td:nth-child(2) {
-            font-size: clamp(0.65rem, 3vw, 0.8rem) !important;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis; 
-        }
-    
-        /* --- COLUNA 3: VALOR --- */
-        #vendas table tbody tr td:nth-child(3) {
-            /* Espaço entre Vendedor e Valor */
-            padding-left: 15px !important; 
+            /* Alinha o texto do produto à direita para ficar organizado */
+            text-align: right !important; 
             
-            text-align: left;
-            white-space: nowrap;
-        }
-    
-        #vendas table tbody tr td:nth-child(3) {
-            font-size: clamp(0.7rem, 3.2vw, 0.9rem) !important;
-            font-weight: 700;
+            /* Cor e peso para destacar */
+            font-weight: 500;
             color: var(--text-primary);
         }
-    
-        /* --- COLUNA 4: AÇÃO --- */
-        #vendas table tbody tr td:last-child {
-            /* Espaço entre Valor e Ação */
-            padding-left: 10px !important;
-            
-            width: 30px; 
-            text-align: center;
+
+        /* Coluna 2: Vendedor (Pequeno ajuste de cor) */
+        #tab-venda table tbody tr td:nth-child(2) {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
-    
-        #vendas table tbody tr td:last-child i,
-        #vendas table tbody tr td:last-child a {
-            font-size: clamp(0.9rem, 4vw, 1.1rem) !important;
-            color: #e74c3c;
+
+        /* Coluna 3: Valor (Destaque) */
+        #tab-venda table tbody tr td:nth-child(3) {
+            font-weight: 800;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        /* Coluna 4: Ícone de Lixo */
+        #tab-venda table tbody tr td:last-child {
+            justify-content: flex-end !important; /* Garante que o ícone fique na ponta */
         }
     }
         
