@@ -581,28 +581,38 @@
     }
 
     /* ==========================================================================
-       MELHORIA COMPLETA DA ABA VENDAS - CELULAR (TODAS AS COLUNAS)
+       MELHORIA DE ESPAÇAMENTO (MARGEM ENTRE COLUNAS)
        ========================================================================== */
     @media (max-width: 768px) {
-        
-        /* CONFIGURAÇÃO GERAL DAS CÉLULAS DA TABELA VENDAS */
+    
+        /* 1. O TRUQUE DA "MARGEM" INVISÍVEL */
         #vendas table tbody tr td {
-            padding: 8px 4px !important; /* Reduz o espaçamento interno para caber mais coisa */
-            vertical-align: middle !important; /* Centraliza verticalmente */
+            /* Tabelas ignoram "margin", então usamos uma borda transparente 
+               na direita para empurrar o vizinho */
+            border-right: 10px solid transparent !important;
+            
+            /* Padding interno leve */
+            padding: 8px 2px !important; 
+            vertical-align: middle !important;
+        }
+    
+        /* Remove a borda da última coluna (Ação) para não desperdiçar espaço no final */
+        #vendas table tbody tr td:last-child {
+            border-right: none !important;
         }
     
         /* --- COLUNA 1: PRODUTO --- */
         #vendas table tbody tr td:first-child {
-            max-width: 130px; /* Limite de largura para forçar a quebra de texto */
+            /* Limite de largura para garantir que a borda transparente funcione */
+            max-width: 100px; 
         }
     
-        /* Nome do Produto */
         #vendas table tbody tr td:first-child div span:first-child {
-            /* Fonte inteligente: Mínimo 11px, Ideal 3.5% da tela, Máximo 15px */
-            font-size: clamp(0.7rem, 3.5vw, 0.95rem) !important;
+            font-size: clamp(0.7rem, 3.5vw, 0.9rem) !important;
             line-height: 1.2 !important;
+            font-weight: 500;
             
-            /* Regra para limitar a 2 linhas (...) */
+            /* Mantém em 2 linhas máx */
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -610,49 +620,49 @@
             white-space: normal;
         }
         
-        /* Data/Hora abaixo do produto */
         #vendas table tbody tr td:first-child div span:last-child {
-            font-size: 0.65rem !important; 
+            font-size: 0.65rem !important;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 2px;
         }
     
         /* --- COLUNA 2: VENDEDOR --- */
-        /* Assumindo que Vendedor é a 2ª coluna (td:nth-child(2)) */
         #vendas table tbody tr td:nth-child(2) {
-            /* Fonte inteligente: Mínimo 10px, Ideal 3% da tela, Máximo 13px */
-            font-size: clamp(0.65rem, 3vw, 0.85rem) !important;
-            color: var(--text-secondary);
+            max-width: 60px;
             text-align: center;
-            white-space: nowrap; /* Tenta manter o nome numa linha só se der */
+        }
+    
+        #vendas table tbody tr td:nth-child(2) {
+            font-size: clamp(0.65rem, 3vw, 0.8rem) !important;
+            color: var(--text-secondary);
+            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 70px; /* Se o nome for muito longo, corta */
+            text-overflow: ellipsis; 
         }
     
         /* --- COLUNA 3: VALOR --- */
-        /* Assumindo que Valor é a 3ª coluna */
         #vendas table tbody tr td:nth-child(3) {
-            /* Fonte inteligente: Mínimo 11px, Ideal 3.2% da tela, Máximo 14px */
-            font-size: clamp(0.7rem, 3.2vw, 0.9rem) !important;
-            font-weight: 600; /* Negrito para destacar o dinheiro */
-            color: var(--text-primary);
             text-align: center;
             white-space: nowrap;
         }
     
-        /* --- COLUNA 4: AÇÃO (BOTÃO) --- */
-        /* Assumindo que é a última coluna */
-        #vendas table tbody tr td:last-child {
-            text-align: center;
-            width: 40px; /* Coluna estreita */
+        #vendas table tbody tr td:nth-child(3) {
+            font-size: clamp(0.7rem, 3.2vw, 0.9rem) !important;
+            font-weight: 700;
+            color: var(--text-primary);
         }
     
-        /* O ícone dentro do botão de ação */
+        /* --- COLUNA 4: AÇÃO --- */
+        #vendas table tbody tr td:last-child {
+            width: 30px; 
+            text-align: center;
+        }
+    
         #vendas table tbody tr td:last-child i,
         #vendas table tbody tr td:last-child a {
-            /* O ícone também usa clamp para não ficar gigante */
-            font-size: clamp(0.8rem, 4vw, 1rem) !important;
-            padding: 5px; /* Área de toque */
-            color: #e74c3c; /* Cor de destaque (ex: vermelho para deletar/cancelar) */
+            font-size: clamp(0.9rem, 4vw, 1.1rem) !important;
+            color: #e74c3c;
         }
     }
         
