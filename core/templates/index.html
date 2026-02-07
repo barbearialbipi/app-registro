@@ -581,45 +581,51 @@
     }
 
     /* ==========================================================================
-       MELHORIA DE ESPAÇAMENTO (MARGEM ENTRE COLUNAS)
-       ========================================================================== */
-    @media (max-width: 768px) {
+   MELHORIA FINAL: ESPAÇAMENTO E SEGURANÇA DE TEXTO LONGO
+   ========================================================================== */
+@media (max-width: 768px) {
     
-        /* 1. O TRUQUE DA "MARGEM" INVISÍVEL */
+        /* 1. REGRA GERAL DAS CÉLULAS (Cria o afastamento entre colunas) */
         #vendas table tbody tr td {
-            /* Tabelas ignoram "margin", então usamos uma borda transparente 
-               na direita para empurrar o vizinho */
-            border-right: 10px solid transparent !important;
+            /* Cria uma margem INVISÍVEL à esquerda de cada coluna */
+            border-left: 12px solid transparent !important;
+            border-right: none !important;
             
-            /* Padding interno leve */
+            /* Padding padrão */
             padding: 8px 2px !important; 
             vertical-align: middle !important;
         }
     
-        /* Remove a borda da última coluna (Ação) para não desperdiçar espaço no final */
-        #vendas table tbody tr td:last-child {
-            border-right: none !important;
-        }
-    
-        /* --- COLUNA 1: PRODUTO --- */
+        /* --- COLUNA 1: PRODUTO (Onde o nome pode ser enorme) --- */
         #vendas table tbody tr td:first-child {
-            /* Limite de largura para garantir que a borda transparente funcione */
-            max-width: 100px; 
+            /* A primeira coluna NÃO tem margem na esquerda (para alinhar com a tela) */
+            border-left: none !important;
+            
+            /* Define a largura máxima que o produto pode ocupar */
+            max-width: 110px; 
+            
+            /* --- AQUI ESTÁ A SEGURANÇA QUE PEDISTE --- */
+            /* Força um espaço vazio DENTRO da célula, na direita. 
+               O texto é obrigado a parar antes de encostar na próxima coluna */
+            padding-right: 15px !important; 
         }
     
+        /* Estilo do Nome do Produto (Item) */
         #vendas table tbody tr td:first-child div span:first-child {
+            /* Ajuste de tamanho fluido */
             font-size: clamp(0.7rem, 3.5vw, 0.9rem) !important;
             line-height: 1.2 !important;
             font-weight: 500;
             
-            /* Mantém em 2 linhas máx */
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
+            /* SE O NOME FOR ENORME: */
+            display: -webkit-box;       /* Ativa o modo de caixa flexível antigo */
+            -webkit-line-clamp: 2;      /* Permite NO MÁXIMO 2 linhas */
             -webkit-box-orient: vertical;
-            overflow: hidden;
-            white-space: normal;
+            overflow: hidden;           /* Esconde o que passar de 2 linhas */
+            white-space: normal;        /* Permite quebrar linha */
         }
         
+        /* Data/Hora */
         #vendas table tbody tr td:first-child div span:last-child {
             font-size: 0.65rem !important;
             color: var(--text-muted);
@@ -631,6 +637,7 @@
         #vendas table tbody tr td:nth-child(2) {
             max-width: 60px;
             text-align: center;
+            /* O border-left geral já está a empurrar esta coluna para longe do produto */
         }
     
         #vendas table tbody tr td:nth-child(2) {
