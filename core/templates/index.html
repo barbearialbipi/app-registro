@@ -580,49 +580,37 @@
         font-weight: 700;
     }
 
-    /* ==========================================================================
-   MELHORIA FINAL: ESPAÇAMENTO E SEGURANÇA DE TEXTO LONGO
-   ========================================================================== */
     @media (max-width: 768px) {
-        
-        /* 1. REGRA GERAL DAS CÉLULAS (Cria o afastamento entre colunas) */
+    
+        /* 1. RESET GERAL */
         #vendas table tbody tr td {
-            /* Cria uma margem INVISÍVEL à esquerda de cada coluna */
-            border-left: 12px solid transparent !important;
-            border-right: none !important;
-            
-            /* Padding padrão */
-            padding: 8px 2px !important; 
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
             vertical-align: middle !important;
+            border: none !important;
         }
     
-        /* --- COLUNA 1: PRODUTO (Onde o nome pode ser enorme) --- */
+        /* --- COLUNA 1: PRODUTO (Agora com margem na esquerda também) --- */
         #vendas table tbody tr td:first-child {
-            /* A primeira coluna NÃO tem margem na esquerda (para alinhar com a tela) */
-            border-left: none !important;
+            /* AQUI: Aumentei para 15px para desencostar da borda da tela */
+            padding-left: 15px !important; 
             
-            /* Define a largura máxima que o produto pode ocupar */
-            max-width: 110px; 
+            /* Margem de segurança na direita (para o texto não invadir o vizinho) */
+            padding-right: 5px !important; 
             
-            /* --- AQUI ESTÁ A SEGURANÇA QUE PEDISTE --- */
-            /* Força um espaço vazio DENTRO da célula, na direita. 
-               O texto é obrigado a parar antes de encostar na próxima coluna */
-            padding-right: 15px !important; 
+            max-width: 100px; 
         }
     
-        /* Estilo do Nome do Produto (Item) */
+        /* Texto do Produto */
         #vendas table tbody tr td:first-child div span:first-child {
-            /* Ajuste de tamanho fluido */
             font-size: clamp(0.7rem, 3.5vw, 0.9rem) !important;
             line-height: 1.2 !important;
             font-weight: 500;
-            
-            /* SE O NOME FOR ENORME: */
-            display: -webkit-box;       /* Ativa o modo de caixa flexível antigo */
-            -webkit-line-clamp: 2;      /* Permite NO MÁXIMO 2 linhas */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
-            overflow: hidden;           /* Esconde o que passar de 2 linhas */
-            white-space: normal;        /* Permite quebrar linha */
+            overflow: hidden;
+            white-space: normal;
         }
         
         /* Data/Hora */
@@ -635,9 +623,11 @@
     
         /* --- COLUNA 2: VENDEDOR --- */
         #vendas table tbody tr td:nth-child(2) {
-            max-width: 60px;
-            text-align: center;
-            /* O border-left geral já está a empurrar esta coluna para longe do produto */
+            /* Espaço entre Produto e Vendedor */
+            padding-left: 15px !important; 
+            
+            max-width: 65px;
+            text-align: left;
         }
     
         #vendas table tbody tr td:nth-child(2) {
@@ -650,7 +640,10 @@
     
         /* --- COLUNA 3: VALOR --- */
         #vendas table tbody tr td:nth-child(3) {
-            text-align: center;
+            /* Espaço entre Vendedor e Valor */
+            padding-left: 15px !important; 
+            
+            text-align: left;
             white-space: nowrap;
         }
     
@@ -662,6 +655,9 @@
     
         /* --- COLUNA 4: AÇÃO --- */
         #vendas table tbody tr td:last-child {
+            /* Espaço entre Valor e Ação */
+            padding-left: 10px !important;
+            
             width: 30px; 
             text-align: center;
         }
