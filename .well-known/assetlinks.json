@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.onrender.registro_barbearia_lucas_borges.twa",
+        "sha256_cert_fingerprints": ["B6:AC:F7:5B:24:AF:D0:25:EA:77:BF:C6:20:56:17:E0:DC:D5:46:84:D2:F5:0B:98:2A:13:88:C3:EB:D1:76:B3"]
+      }
+    }]
