@@ -52,8 +52,14 @@
         --shadow: 0 8px 20px rgba(0, 39, 90, 0.1);
         --hover-bg: #f0f2f5;
         
-        /* NOVA VARIÁVEL: Borda da logo é AZUL no modo claro */
+        /* Borda da logo é AZUL no modo claro */
         --logo-border-color: var(--brand-blue);
+
+        /* CORES DOS CARDS (KPIs) - MODO CLARO */
+        --kpi-blue: linear-gradient(135deg, #3498db, #2980b9);
+        --kpi-orange: linear-gradient(135deg, #f39c12, #d35400);
+        --kpi-red: linear-gradient(135deg, #e74c3c, #c0392b);
+        --kpi-green: linear-gradient(135deg, #2ecc71, #27ae60);
     }
 
     /* TEMA ESCURO (LUXO) */
@@ -70,8 +76,14 @@
         --brand-blue: #4c8dff;
         --hover-bg: #0d2b52;
 
-        /* NOVA VARIÁVEL: Borda da logo combina com o fundo no modo escuro */
+        /* Borda da logo combina com o fundo no modo escuro */
         --logo-border-color: var(--bg-card);
+
+        /* CORES DOS CARDS (KPIs) - MODO ESCURO (Tons mais profundos e luxuosos) */
+        --kpi-blue: linear-gradient(135deg, #174276, #0a2140);
+        --kpi-orange: linear-gradient(135deg, #a77507, #5c3b00);
+        --kpi-red: linear-gradient(135deg, #962518, #521109);
+        --kpi-green: linear-gradient(135deg, #1e8749, #0e4022);
     }
 
     /* =========================================
@@ -227,6 +239,7 @@
         box-shadow: var(--shadow); 
         position: relative;
         overflow: hidden;
+        transition: background 0.3s ease; /* Adicionado para suavizar a troca de tema */
     }
     .kpi-box::after {
         content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -235,10 +248,11 @@
     .kpi-label { font-size: 0.75rem; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
     .kpi-value { font-size: 1.5rem; font-weight: 800; }
     
-    .bg-blue { background: linear-gradient(135deg, #3498db, #2980b9); }
-    .bg-orange { background: linear-gradient(135deg, #f39c12, #d35400); }
-    .bg-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-    .bg-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    /* AQUI ESTÁ A MUDANÇA: Agora elas chamam as variáveis de cor criadas acima */
+    .bg-blue { background: var(--kpi-blue); }
+    .bg-orange { background: var(--kpi-orange); }
+    .bg-red { background: var(--kpi-red); }
+    .bg-green { background: var(--kpi-green); }
 
     @media(min-width: 768px) {
         .kpi-container { grid-template-columns: repeat(4, 1fr); gap: 20px; }
@@ -414,53 +428,47 @@
         color: var(--brand-blue); 
         margin-bottom: 20px; 
         
-        /* AQUI ESTÁ A CORREÇÃO: */
-        font-size: 1.0rem; /* Diminuí para caber tudo numa linha só */
+        font-size: 1.0rem; 
         
         border-bottom: 2px solid var(--border-color); 
         padding-bottom: 10px; 
         text-transform: uppercase;
         
-        /* Garante que o texto fique sempre bonito */
-        white-space: nowrap;      /* Força a não quebrar linha */
-        overflow: hidden;         /* Segurança extra */
-        text-overflow: ellipsis;  /* Se a tela for minúscula, põe "..." */
+        white-space: nowrap;     
+        overflow: hidden;         
+        text-overflow: ellipsis;  
     }
-    /* Item da lista de produtividade */
     .prod-item { 
         display: flex; 
         justify-content: space-between; 
-        align-items: center; /* Alinha o texto no meio verticalmente */
+        align-items: center; 
         padding: 12px 0; 
         border-bottom: 1px solid var(--border-color); 
-        font-size: 1rem; /* Ajustei levemente o tamanho para caber melhor */
+        font-size: 1rem; 
         color: var(--text-secondary);
         
-        /* AQUI ESTÁ A CORREÇÃO: */
-        gap: 15px; /* Cria um espaço obrigatório de 15px entre o nome e o número */
+        gap: 15px; 
     }
 
-   /* ESTILO DO TOTAL GERAL (Corrigido para ficar Negrito e Bonito) */
     .prod-total { 
         display: flex; 
-        justify-content: space-between; /* Joga "Total" pra esquerda e "31" pra direita */
+        justify-content: space-between; 
         align-items: center;
         
         padding-top: 20px; 
         margin-top: 15px; 
-        border-top: 3px solid var(--border-color); /* A linha divisória mais grossa */
+        border-top: 3px solid var(--border-color); 
         
-        font-size: 1.4rem; /* Aumentei um pouco para destacar */
-        font-weight: 900;  /* Negrito máximo da fonte Poppins */
-        color: var(--text-primary); /* Respeita a cor do tema (Azul ou Branco) */
+        font-size: 1.4rem; 
+        font-weight: 900;  
+        color: var(--text-primary); 
         text-transform: uppercase;
         letter-spacing: 1px;
     } 
 
-    /* O Número de atendimentos */
     .prod-item strong { 
         color: var(--text-primary); 
-        white-space: nowrap; /* Garante que "21 atendimentos" fique sempre na mesma linha */
+        white-space: nowrap; 
         text-align: right;
     }
 
@@ -472,7 +480,7 @@
         background: var(--bg-card); 
         padding: 20px; border-radius: 15px; 
         height: 250px; box-shadow: var(--shadow); 
-        border: 1px solid var(--border-color); /* Adicionei borda para o tema escuro */
+        border: 1px solid var(--border-color); 
     }
     @media(min-width: 900px) { .charts-row { grid-template-columns: repeat(3, 1fr); } }
 
@@ -498,7 +506,6 @@
        11. SELECT PERSONALIZADO (Bonito no Mobile)
        ========================================= */
     
-    /* Esconde o select nativo original */
     select {
         display: none !important;
     }
@@ -506,10 +513,9 @@
     .custom-select-container {
         position: relative;
         width: 100%;
-        margin-bottom: 15px; /* Espaço igual aos inputs */
+        margin-bottom: 15px; 
     }
 
-    /* A caixa que parece o input (fechada) */
     .select-selected {
         background-color: var(--input-bg);
         color: var(--text-primary);
@@ -525,7 +531,6 @@
         transition: all 0.3s;
     }
 
-    /* Seta customizada */
     .select-selected:after {
         content: "";
         width: 0; height: 0;
@@ -534,13 +539,11 @@
         margin-top: 5px;
     }
     
-    /* Quando está aberto, a seta vira */
     .select-selected.select-arrow-active:after {
         border-color: transparent transparent var(--text-muted) transparent;
         margin-top: -7px;
     }
 
-    /* A lista de opções (aberta) */
     .select-items {
         position: absolute;
         background-color: var(--bg-card);
@@ -552,17 +555,15 @@
         border: 1px solid var(--border-color);
         border-radius: 8px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-        max-height: 250px; /* Scroll se for muito grande */
+        max-height: 250px; 
         overflow-y: auto;
         margin-top: 5px;
     }
 
-    /* Esconder a lista */
     .select-hide {
         display: none;
     }
 
-    /* Cada opção da lista */
     .select-items div {
         padding: 12px 15px;
         cursor: pointer;
@@ -585,57 +586,41 @@
        ========================================= */
     @media (max-width: 768px) {
     
-        /* 1. RESET E ALINHAMENTO GERAL DAS TABELAS */
-        /* Isso garante que todas as abas tenham o comportamento de "Card" */
         tbody tr td {
             display: flex !important;
             justify-content: space-between !important;
-            align-items: center !important; /* Centraliza verticalmente */
-            padding: 12px 15px !important;  /* Espaçamento interno */
-            text-align: right !important;   /* Força o texto do valor para a direita */
-            
-            /* A MÁGICA: Cria um espaço invisível de 20px entre o Rótulo e o Texto */
+            align-items: center !important; 
+            padding: 12px 15px !important;  
+            text-align: right !important;   
             gap: 20px; 
         }
 
-        /* Garante que o rótulo (Ex: PRODUTO) nunca encolha ou quebre */
         tbody tr td::before {
-            flex-shrink: 0; /* Não deixa o rótulo ser esmagado */
+            flex-shrink: 0; 
         }
 
-        /* --- AJUSTES ESPECÍFICOS PARA A ABA VENDAS (#tab-venda) --- */
-        
-        /* Coluna 1: Descrição do Produto */
         #tab-venda table tbody tr td:first-child {
-            /* Permite que o texto quebre linha se for muito grande */
             white-space: normal !important; 
             word-wrap: break-word;
             line-height: 1.3;
-            
-            /* Alinha o texto do produto à direita para ficar organizado */
             text-align: right !important; 
-            
-            /* Cor e peso para destacar */
             font-weight: 500;
             color: var(--text-primary);
         }
 
-        /* Coluna 2: Vendedor (Pequeno ajuste de cor) */
         #tab-venda table tbody tr td:nth-child(2) {
             color: var(--text-secondary);
             font-size: 0.9rem;
         }
 
-        /* Coluna 3: Valor (Destaque) */
         #tab-venda table tbody tr td:nth-child(3) {
             font-weight: 800;
             color: var(--text-primary);
             font-size: 1rem;
         }
 
-        /* Coluna 4: Ícone de Lixo */
         #tab-venda table tbody tr td:last-child {
-            justify-content: flex-end !important; /* Garante que o ícone fique na ponta */
+            justify-content: flex-end !important; 
         }
     }
         
