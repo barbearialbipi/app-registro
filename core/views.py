@@ -136,10 +136,10 @@ def home(request):
     agendamentos = []; vendas = []; saidas = []
     kpi_agend = 0; kpi_vend = 0; kpi_said = 0
     
-    stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0, 'ERIK': 0}
+    stats_barbeiros = {'LUCAS': 0, 'ALUIZIO': 0}
     
     # --- NOVO 1: Variável para somar o dinheiro ---
-    faturamento_barbeiros = {'LUCAS': 0.0, 'ALUIZIO': 0.0, 'ERIK': 0.0} 
+    faturamento_barbeiros = {'LUCAS': 0.0, 'ALUIZIO': 0.0} 
 
     totais_pgt = {'DINHEIRO': 0, 'PIX': 0, 'CARTAO': 0}
     stats_servicos = {}
