@@ -169,7 +169,6 @@ def home(request):
                         chave_barbeiro = 'OUTROS'
                         if 'LUCAS' in raw_barbeiro: chave_barbeiro = 'LUCAS'
                         elif 'ALUIZIO' in raw_barbeiro or 'ALUÍZIO' in raw_barbeiro: chave_barbeiro = 'ALUIZIO'
-                        elif 'ERIK' in raw_barbeiro or 'ERICK' in raw_barbeiro: chave_barbeiro = 'ERIK'
                         
                         # Lista Visual
                         item = {
